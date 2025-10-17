@@ -1,0 +1,55 @@
+@{
+    ViewData["Title"] = "Бронювання місць";
+}
+
+<section class="booking">
+    <h1>Бронювання місць у коворкінгу</h1>
+    <p>Введіть дані, щоб забронювати місце на потрібну дату та час.</p>
+
+    <form id="bookingForm">
+        <div class="form-group">
+            <label for="room">Номер кімнати / зони</label>
+            <input type="text" id="room" name="room" required />
+        </div>
+
+        <div class="form-group">
+            <label for="date">Дата бронювання</label>
+            <input type="date" id="date" name="date" required />
+        </div>
+
+        <div class="form-group">
+            <label for="time">Час бронювання</label>
+            <input type="time" id="time" name="time" required />
+        </div>
+
+        <div class="form-group">
+            <label for="duration">Тривалість (години)</label>
+            <input type="number" id="duration" name="duration" min="1" max="8" required />
+        </div>
+
+        <button type="submit" class="btn">Забронювати</button>
+    </form>
+
+    <div id="bookingResult" class="booking-result"></div>
+</section>
+
+<script>
+document.getElementById('bookingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const room = document.getElementById('room').value.trim();
+    const date = document.getElementById('date').value;
+    const time = document.getElementById('time').value;
+    const duration = document.getElementById('duration').value;
+
+    const resultDiv = document.getElementById('bookingResult');
+
+    if (!room || !date || !time || !duration) {
+        resultDiv.textContent = 'Будь ласка, заповніть всі поля';
+        resultDiv.style.color = 'red';
+    } else {
+        resultDiv.textContent = `Місце "${room}" заброньовано на ${date} о ${time} на ${duration} год. (імітація)`;
+        resultDiv.style.color = 'green';
+    }
+});
+</script>
