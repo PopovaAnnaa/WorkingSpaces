@@ -38,3 +38,5 @@ packages/
 *.app
 /bin
 /obj
+/bin/Debug
+/obj/Debug/net8.0
