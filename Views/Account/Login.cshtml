@@ -20,7 +20,11 @@
     </form>
 
     <p>Ще немає акаунту? <a href="/Account/Register">Зареєструватися</a></p>
+
+    <p>Або увійдіть через зовнішнього провайдера:</p>
+    <a href="/Account/ExternalLogin?provider=Okta" class="btn btn-okta">Login with Okta</a>
 </section>
+
 
 <script>
 document.getElementById('loginForm').addEventListener('submit', function(e) {
@@ -41,3 +45,18 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
     }
 });
 </script>
+
+<style>
+.btn-okta {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 16px;
+    background-color: #007dc1;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+}
+.btn-okta:hover {
+    background-color: #005a8b;
+}
+</style>

@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/lizokokok/Documents/Crossplatform/WorkingSpaces/WorkingSpaces.csproj": {}
+    "C:\\Users\\Dasha\\Desktop\\lab3\\WorkingSpaces\\WorkingSpaces.csproj": {}
   },
   "projects": {
-    "/Users/lizokokok/Documents/Crossplatform/WorkingSpaces/WorkingSpaces.csproj": {
+    "C:\\Users\\Dasha\\Desktop\\lab3\\WorkingSpaces\\WorkingSpaces.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/lizokokok/Documents/Crossplatform/WorkingSpaces/WorkingSpaces.csproj",
+        "projectUniqueName": "C:\\Users\\Dasha\\Desktop\\lab3\\WorkingSpaces\\WorkingSpaces.csproj",
         "projectName": "WorkingSpaces",
-        "projectPath": "/Users/lizokokok/Documents/Crossplatform/WorkingSpaces/WorkingSpaces.csproj",
-        "packagesPath": "/Users/lizokokok/.nuget/packages/",
-        "outputPath": "/Users/lizokokok/Documents/Crossplatform/WorkingSpaces/obj/",
+        "projectPath": "C:\\Users\\Dasha\\Desktop\\lab3\\WorkingSpaces\\WorkingSpaces.csproj",
+        "packagesPath": "C:\\Users\\Dasha\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Dasha\\Desktop\\lab3\\WorkingSpaces\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/lizokokok/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\Dasha\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -46,6 +46,14 @@
             "BCrypt.Net-Next": {
               "target": "Package",
               "version": "[4.0.3, )"
+            },
+            "Microsoft.AspNetCore.Authentication.Cookies": {
+              "target": "Package",
+              "version": "[2.3.0, )"
+            },
+            "Microsoft.AspNetCore.Authentication.OpenIdConnect": {
+              "target": "Package",
+              "version": "[8.0.4, )"
             }
           },
           "imports": [
@@ -67,7 +75,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.414/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.414/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
