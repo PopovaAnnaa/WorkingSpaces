@@ -3,20 +3,28 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Налаштування Kestrel на HTTP для локальної розробки
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5001); // слухаємо HTTP на порту 5000
+});
+
 // Add services to the container
 builder.Services.AddControllersWithViews();
+builder.Services.AddAuthorization();
+
 
 // Cookie Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = "Okta"; // зовнішній провайдер за замовчуванням
+    options.DefaultChallengeScheme = "Okta";
 })
 .AddCookie(options =>
 {
-    options.LoginPath = "/Account/Login"; // куди перекидає неавторизованого
-    options.LogoutPath = "/Account/Logout"; // шлях для виходу
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(60); // час життя кукі
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
 })
 .AddOpenIdConnect("Okta", options =>
 {
@@ -40,12 +48,14 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Тимчасово вимикаємо HTTPS для локальної розробки
+// app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthentication(); // додаємо аутентифікацію перед авторизацією
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

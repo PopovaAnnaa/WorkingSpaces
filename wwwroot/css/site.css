@@ -1,3 +1,119 @@
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+/* --- Navbar --- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 60px;
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 1px;
+}
+
+.logo span {
+    color: #5a2a82;
+}
+
+.navbar ul {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar a {
+    text-decoration: none;
+    color: #222;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.navbar a:hover {
+    color: #5a2a82;
+}
+
+.navbar .email {
+    font-size: 14px;
+    color: #555;
+}
+
+.login-btn {
+    background: #3b1053;
+    color: #fff !important;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+/* --- Hero section --- */
+.hero {
+    position: relative;
+    height: 90vh;
+    background: url('/img/hero.jpeg') no-repeat center center/cover;
+    display: flex;
+    align-items: center;
+    padding-left: 60px;
+}
+
+.overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to right, rgba(64,0,128,0.6), rgba(0,0,0,0));
+}
+
+.hero-content {
+    position: relative;
+    color: #fff;
+    max-width: 500px;
+}
+
+.hero-content .location {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.hero-content h1 {
+    font-size: 48px;
+    line-height: 1.2;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.hero-content .subtitle {
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.cta-btn {
+    display: inline-block;
+    border: 2px solid #fff;
+    padding: 10px 25px;
+    border-radius: 25px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #fff;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.cta-btn:hover {
+    background: #fff;
+    color: #3b1053;
+}
+
 .welcome {
   text-align: center;
   margin-top: 80px;

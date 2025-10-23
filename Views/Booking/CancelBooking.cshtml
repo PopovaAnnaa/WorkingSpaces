@@ -1,0 +1,69 @@
+@{
+    ViewData["Title"] = "Cancel Booking";
+}
+
+<h2>Cancel Booking</h2>
+
+<form method="post" class="booking-form">
+    <label>Date:</label>
+    <input type="date" name="date" required />
+    
+    <label>Room:</label>
+    <input type="text" name="room" placeholder="Enter room name" required />
+    
+    <label>Username:</label>
+    <input type="text" name="username" placeholder="Enter your username" required />
+    
+    <button type="submit">Cancel</button>
+</form>
+
+@if(ViewBag.Result != null)
+{
+    <p class="result">@ViewBag.Result</p>
+}
+
+<style>
+.booking-form {
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+.booking-form label {
+    margin-top: 10px;
+    font-weight: bold;
+}
+.booking-form input {
+    padding: 8px;
+    margin-top: 4px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+.booking-form button {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.booking-form button:hover {
+    background-color: #a71d2a;
+}
+.result {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #dc3545;
+}
+.description {
+    margin-top: 20px;
+    font-style: italic;
+    color: #555;
+}
+</style>
