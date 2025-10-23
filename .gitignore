@@ -37,3 +37,4 @@ packages/
 *.dll
 *.app
 /bin
+/obj
