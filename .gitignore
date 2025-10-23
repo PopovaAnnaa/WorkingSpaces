@@ -36,3 +36,4 @@ packages/
 *.exe
 *.dll
 *.app
+/bin
