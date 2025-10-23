@@ -1,15 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "EMpsEhEdD8c=",
+  "dgSpecHash": "MD0Nr1e5SHo=",
   "success": true,
-  "projectFilePath": "/Users/annapopova/Documents/GitHub/WorkingSpaces/WorkingSpaces.csproj",
-  "expectedPackageFiles": [],
-  "logs": [
-    {
-      "code": "NU1803",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "You are running the 'restore' operation with an 'HTTP' source, 'http://192.168.0.120:5555/v3/index.json'. Non-HTTPS access will be removed in a future version. Consider migrating to an 'HTTPS' source."
-    }
-  ]
+  "projectFilePath": "/Users/lizokokok/Documents/Crossplatform/WorkingSpaces/WorkingSpaces.csproj",
+  "expectedPackageFiles": [
+    "/Users/lizokokok/.nuget/packages/bcrypt.net-next/4.0.3/bcrypt.net-next.4.0.3.nupkg.sha512"
+  ],
+  "logs": []
 }

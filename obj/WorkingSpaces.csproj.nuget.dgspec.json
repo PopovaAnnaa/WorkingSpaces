@@ -1,26 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "/Users/annapopova/Documents/GitHub/WorkingSpaces/WorkingSpaces.csproj": {}
+    "/Users/lizokokok/Documents/Crossplatform/WorkingSpaces/WorkingSpaces.csproj": {}
   },
   "projects": {
-    "/Users/annapopova/Documents/GitHub/WorkingSpaces/WorkingSpaces.csproj": {
+    "/Users/lizokokok/Documents/Crossplatform/WorkingSpaces/WorkingSpaces.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/annapopova/Documents/GitHub/WorkingSpaces/WorkingSpaces.csproj",
+        "projectUniqueName": "/Users/lizokokok/Documents/Crossplatform/WorkingSpaces/WorkingSpaces.csproj",
         "projectName": "WorkingSpaces",
-        "projectPath": "/Users/annapopova/Documents/GitHub/WorkingSpaces/WorkingSpaces.csproj",
-        "packagesPath": "/Users/annapopova/.nuget/packages/",
-        "outputPath": "/Users/annapopova/Documents/GitHub/WorkingSpaces/obj/",
+        "projectPath": "/Users/lizokokok/Documents/Crossplatform/WorkingSpaces/WorkingSpaces.csproj",
+        "packagesPath": "/Users/lizokokok/.nuget/packages/",
+        "outputPath": "/Users/lizokokok/Documents/Crossplatform/WorkingSpaces/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/annapopova/.nuget/NuGet/NuGet.Config"
+          "/Users/lizokokok/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "http://192.168.0.120:5555/v3/index.json": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -43,6 +42,12 @@
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
+          "dependencies": {
+            "BCrypt.Net-Next": {
+              "target": "Package",
+              "version": "[4.0.3, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -62,7 +67,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.402/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.414/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
