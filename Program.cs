@@ -3,26 +3,25 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Kestrel слухає HTTPS на 5189
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(5001); 
+    options.ListenLocalhost(5189, listenOptions =>
+    {
+        listenOptions.UseHttps();
+    });
 });
 
+// MVC
 builder.Services.AddControllersWithViews();
-builder.Services.AddAuthorization();
 
+// Authentication & Authorization
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = "Okta";
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme; // "Cookies"
+    options.DefaultChallengeScheme = "Okta"; // OpenID Connect схема
 })
-.AddCookie(options =>
-{
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
-})
-
+.AddCookie()
 .AddOpenIdConnect("Okta", options =>
 {
     options.ClientId = "Mf1FSPAZ0IBZ0ILlUgsRbPP8HLZDZDXY";
@@ -30,11 +29,35 @@ builder.Services.AddAuthentication(options =>
     options.Authority = "https://dev-2a7o8mgzl3i7lh4m.us.auth0.com/";
     options.ResponseType = "code";
     options.SaveTokens = true;
-    options.CallbackPath = "/Account/ExternalLoginCallback"; 
+    options.CallbackPath = "/Account/ExternalLoginCallback";
+
     options.Scope.Add("openid");
     options.Scope.Add("profile");
     options.Scope.Add("email");
+
+    // Додаткове логування для діагностики
+    options.Events = new OpenIdConnectEvents
+    {
+        OnRedirectToIdentityProvider = context =>
+        {
+            Console.WriteLine("Redirecting to IdP: " + context.ProtocolMessage.RedirectUri);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("Token validated!");
+            return Task.CompletedTask;
+        },
+        OnRemoteFailure = context =>
+        {
+            Console.WriteLine("Remote failure: " + context.Failure?.Message);
+            context.HandleResponse();
+            return Task.CompletedTask;
+        }
+    };
 });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -43,8 +66,6 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-
-// app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 

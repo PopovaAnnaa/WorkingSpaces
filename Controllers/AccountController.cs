@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using WorkingSpaces.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 
@@ -90,35 +89,45 @@ namespace WorkingSpaces.Controllers
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity!),
-                authProperties!);
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties);
 
             return RedirectToAction("Index", "Booking");
         }
 
+        // 🔹 External login (Okta/Auth0)
         [HttpGet]
         public IActionResult ExternalLogin(string provider, string? returnUrl = null)
         {
-            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl })!;
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
             var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
-            return Challenge(properties, provider);
+            return Challenge(properties, provider); // provider = "Okta"
         }
 
+        // 🔹 Callback після зовнішнього логіна
         [HttpGet]
         public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null)
         {
-            var result = await HttpContext.AuthenticateAsync(OpenIdConnectDefaults.AuthenticationScheme);
+            // Використовуємо правильну схему "Okta"
+            var result = await HttpContext.AuthenticateAsync("Okta");
+
             if (result?.Principal == null)
+            {
+                // Додаткове логування для діагностики
+                Console.WriteLine("ExternalLoginCallback failed: Principal is null");
                 return RedirectToAction("Login");
+            }
 
-            var claims = result.Principal.Claims.ToList();
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            // Створюємо ClaimsIdentity для Cookies
+            var claimsIdentity = new ClaimsIdentity(result.Principal.Claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
+            // Підписуємо користувача
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity!));
+                new ClaimsPrincipal(claimsIdentity));
 
-            return RedirectToAction("Index", "Home");
+            // Повернення на домашню сторінку або returnUrl
+            return Redirect(returnUrl ?? "/");
         }
 
         [HttpPost]
