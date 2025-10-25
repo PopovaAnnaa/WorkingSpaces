@@ -1,0 +1,67 @@
+@model WorkingSpaces.Models.ProfileViewModel
+@{
+    ViewData["Title"] = "Profile";
+}
+
+<section class="profile">
+    <h1>Profile</h1>
+
+    <div class="profile-info">
+        <p><strong>Username:</strong> @Model.Username</p>
+        <p><strong>Full Name:</strong> @Model.FullName</p>
+        <p><strong>Email:</strong> @Model.Email</p>
+        <form method="post" asp-controller="Account" asp-action="Logout" style="display:inline">
+            <button type="submit" class="logout-btn">Logout</button>
+        </form>
+    </div>
+</section>
+
+<style>
+    body {
+        background-color: #f5f4f8;
+    }
+
+    .profile {
+        max-width: 500px;
+        margin: 150px auto;
+        padding: 20px;
+        background-color: #dfcdf6; 
+        border-radius: 10px;
+        font-family: sans-serif;
+        color: #333;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .profile h1 {
+        text-align: center;
+        color: #6a0dad; 
+        margin-bottom: 20px;
+    }
+
+    .profile-info p {
+        margin-bottom: 10px;
+    }
+
+    .profile-info strong {
+        color: #4b0082; 
+    }
+
+    .logout-btn {
+        display: inline-block;
+        padding: 10px 20px;
+        margin-top: 10px;
+        background-color: rgb(159, 100, 202); 
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        text-align: center;
+        transition: background-color 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .logout-btn:hover {
+        background-color: #733e99;
+    }
+</style>

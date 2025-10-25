@@ -5,17 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - WorkingSpaces</title>
     <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/WorkingSpaces.styles.css" />
 </head>
 <body>
+    <style>
+        .login-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #8721d1ff; 
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+
+        .profile-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #8721d1ff; 
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+
+        .login-btn:hover {
+            background-color: #4b0082;
+        }
+
+        .profile-btn:hover {
+            background-color: #4b0082;
+        }
+    </style>
     <header class="navbar">
-        <a class="logo" href="/">WORKING.<span>SPACES</span></a>
+    <a class="logo" href="/">WORKING.<span>SPACES</span></a>
         <nav>
             <ul>
                 <li class="email">working.spaces@gmail.com</li>
-                <li><a class="login-btn" href="/Account/Login">Login</a></li>
+
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    <li>
+                        <a asp-controller="Booking" asp-action="Index">Booking</a>
+                    </li>
+                    <li>
+                        <a asp-controller="Account" asp-action="Profile" class="profile-btn">Profile</a>
+                    </li>
+                }
+                else
+                {
+                    <li>
+                        <a asp-controller="Account" asp-action="Login" class="login-btn">Login</a>
+                    </li>
+                }
             </ul>
         </nav>
     </header>
+
 
     <main role="main">
         @RenderBody()

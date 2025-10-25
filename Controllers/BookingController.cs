@@ -4,19 +4,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-// [Authorize]
+[Authorize]
 public class BookingController : Controller
 {
-    // Імітація бази даних бронювань у пам'яті
     private static readonly List<Booking> _bookings = new List<Booking>();
 
-    // Головна сторінка /Booking
     public IActionResult Index()
     {
         return View();
     }
 
-    // ================= CheckAvailability =================
     [HttpGet]
     public IActionResult CheckAvailability()
     {
@@ -31,7 +28,6 @@ public class BookingController : Controller
         return View();
     }
 
-    // ================= BookRoom =================
     [HttpGet]
     public IActionResult BookRoom()
     {
@@ -58,7 +54,6 @@ public class BookingController : Controller
         return View();
     }
 
-    // ================= CancelBooking =================
     [HttpGet]
     public IActionResult CancelBooking()
     {
@@ -80,9 +75,13 @@ public class BookingController : Controller
         }
         return View();
     }
+
+    public IActionResult ListBookings()
+    {
+        return View(_bookings);
+    }
 }
 
-// Модель бронювання
 public class Booking
 {
     public string Room { get; set; } = string.Empty;

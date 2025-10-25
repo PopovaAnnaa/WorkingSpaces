@@ -1,0 +1,62 @@
+@model List<Booking>
+
+
+<h2>Усі бронювання</h2>
+
+<table border="1">
+    <tr>
+        <th>Room</th>
+        <th>Date</th>
+        <th>Username</th>
+    </tr>
+    @foreach (var booking in Model)
+    {
+        <tr>
+            <td>@booking.Room</td>
+            <td>@booking.Date.ToShortDateString()</td>
+            <td>@booking.Username</td>
+        </tr>
+    }
+</table>
+
+<style>
+    body {
+        background-color: #f5f4f8;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        margin-top: 50px;
+    }
+
+    table {
+        width: 80%;
+        margin: 0 auto;
+        border-collapse: collapse;
+        background-color: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+        padding: 12px 15px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #6a0dad;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    tr:hover {
+        background-color: #ece0f8;
+    }
+</style>

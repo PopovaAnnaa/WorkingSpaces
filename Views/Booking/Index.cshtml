@@ -1,55 +1,78 @@
 @{
-    ViewData["Title"] = "Бронювання місць";
+    ViewData["Title"] = "Booking";
 }
 
 <section class="booking">
-    <h1>Бронювання місць у коворкінгу</h1>
-    <p>Введіть дані, щоб забронювати місце на потрібну дату та час.</p>
+    <h1>Room Booking System</h1>
+    <p>Select an action below:</p>
 
-    <form id="bookingForm">
-        <div class="form-group">
-            <label for="room">Номер кімнати / зони</label>
-            <input type="text" id="room" name="room" required />
-        </div>
-
-        <div class="form-group">
-            <label for="date">Дата бронювання</label>
-            <input type="date" id="date" name="date" required />
-        </div>
-
-        <div class="form-group">
-            <label for="time">Час бронювання</label>
-            <input type="time" id="time" name="time" required />
-        </div>
-
-        <div class="form-group">
-            <label for="duration">Тривалість (години)</label>
-            <input type="number" id="duration" name="duration" min="1" max="8" required />
-        </div>
-
-        <button type="submit" class="btn">Забронювати</button>
-    </form>
-
-    <div id="bookingResult" class="booking-result"></div>
+    <div class="booking-actions">
+        <a asp-controller="Booking" asp-action="ListBookings" class="btn btn-outline">View Booked Rooms</a>
+        <a asp-controller="Booking" asp-action="CheckAvailability" class="btn">Check Availability</a>
+        <a asp-controller="Booking" asp-action="BookRoom" class="btn">Book a Room</a>
+        <a asp-controller="Booking" asp-action="CancelBooking" class="btn">Cancel Booking</a>
+    </div>
 </section>
 
-<script>
-document.getElementById('bookingForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const room = document.getElementById('room').value.trim();
-    const date = document.getElementById('date').value;
-    const time = document.getElementById('time').value;
-    const duration = document.getElementById('duration').value;
-
-    const resultDiv = document.getElementById('bookingResult');
-
-    if (!room || !date || !time || !duration) {
-        resultDiv.textContent = 'Будь ласка, заповніть всі поля';
-        resultDiv.style.color = 'red';
-    } else {
-        resultDiv.textContent = `Місце "${room}" заброньовано на ${date} о ${time} на ${duration} год. (імітація)`;
-        resultDiv.style.color = 'green';
+<style>
+    body {
+        background-color: #f5f4f8;
     }
-});
-</script>
+
+    .booking {
+        max-width: 480px;
+        margin: 100px auto;
+        text-align: center;
+        padding: 35px;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .booking h1 {
+        font-size: 1.6rem;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .booking p {
+        margin-bottom: 25px;
+        color: #6c5b7a;
+        font-size: 0.95rem;
+    }
+
+    .booking-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn {
+        display: block;
+        padding: 11px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        background-color: #b8a4f3;
+        color: #4a3f5a;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .btn:hover {
+        background-color: #a28ee1;
+        transform: translateY(-1px);
+    }
+
+    .btn-outline {
+        background: transparent;
+        color: #b8a4f3;
+        border: 1.5px solid #b8a4f3;
+    }
+
+    .btn-outline:hover {
+        background-color: #b8a4f3;
+        color: #4a3f5a;
+    }
+</style>

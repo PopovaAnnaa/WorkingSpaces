@@ -14,7 +14,6 @@ namespace WorkingSpaces.Controllers
         private static readonly ConcurrentDictionary<Guid, User> _inMemoryUsers =
             new ConcurrentDictionary<Guid, User>();
 
-        // ==================== Локальна реєстрація ====================
         [HttpGet]
         public IActionResult Register()
         {
@@ -53,7 +52,6 @@ namespace WorkingSpaces.Controllers
             return View(model);
         }
 
-        // ==================== Локальний логін ====================
         [HttpGet]
         public IActionResult Login()
         {
@@ -90,16 +88,14 @@ namespace WorkingSpaces.Controllers
                 IsPersistent = true
             };
 
-            // Виправлено: додаємо null-forgiving оператори
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(claimsIdentity!),
                 authProperties!);
 
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Index", "Booking");
         }
 
-        // ==================== Логін через зовнішнього провайдера (Okta) ====================
         [HttpGet]
         public IActionResult ExternalLogin(string provider, string? returnUrl = null)
         {
@@ -125,7 +121,6 @@ namespace WorkingSpaces.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // ==================== Вихід ====================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
@@ -134,11 +129,21 @@ namespace WorkingSpaces.Controllers
             return RedirectToAction("Login");
         }
 
-        // ==================== Профіль ====================
         [Authorize]
         public IActionResult Profile()
         {
-            return View();
+            var username = User.FindFirstValue(ClaimTypes.Name);
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var fullName = User.FindFirstValue("FullName");
+
+            var model = new ProfileViewModel
+            {
+                Username = username ?? "",
+                Email = email ?? "",
+                FullName = fullName ?? "",
+            };
+
+            return View(model);
         }
     }
 }

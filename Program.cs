@@ -3,18 +3,14 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Налаштування Kestrel на HTTP для локальної розробки
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenAnyIP(5001); // слухаємо HTTP на порту 5000
+    options.ListenAnyIP(5001); 
 });
 
-// Add services to the container
 builder.Services.AddControllersWithViews();
 builder.Services.AddAuthorization();
 
-
-// Cookie Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -26,6 +22,7 @@ builder.Services.AddAuthentication(options =>
     options.LogoutPath = "/Account/Logout";
     options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
 })
+
 .AddOpenIdConnect("Okta", options =>
 {
     options.ClientId = "Mf1FSPAZ0IBZ0ILlUgsRbPP8HLZDZDXY";
@@ -41,14 +38,12 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
-// Тимчасово вимикаємо HTTPS для локальної розробки
 // app.UseHttpsRedirection();
 
 app.UseStaticFiles();
