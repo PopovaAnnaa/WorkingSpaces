@@ -24,17 +24,69 @@ public class BookingController : Controller
         return View();
     }
 
+    private string? ValidateBookingTime(int spaceId, DateTimeOffset startOffset, DateTimeOffset endOffset)
+    {
+        if (_spaces.All(s => s.SpaceId != spaceId))
+        {
+            return "Error: Room not found.";
+        }
+        if (startOffset.Hour < 8 || endOffset.Hour > 23)
+        {
+            return "Error: Invalid time (8:00-23:00).";
+        }
+        if (startOffset < DateTimeOffset.Now)
+        {
+            return "Error: Invalid time (in the past tense).";
+        }
+        if (endOffset <= startOffset)
+        {
+            return "Error: Invalid time (end later than start).";
+        }
+        if ((endOffset - startOffset).TotalMinutes < 15)
+        {
+            return "Error: Reservation minimum 15 minutes.";
+        }
+        return null;
+    }
+    
     [HttpGet]
     public IActionResult CheckAvailability()
     {
+        ViewBag.Spaces = _spaces;
         return View();
     }
 
-    // [HttpPost]
-    // public IActionResult CheckAvailability()
-    // {
-    //     return View();
-    // }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult CheckAvailability(int spaceId, DateTime selectedDate, TimeSpan startTime, TimeSpan endTime)
+    {
+        var startDateTime = selectedDate.Date.Add(startTime);
+        var endDateTime = selectedDate.Date.Add(endTime);
+        var startOffset = new DateTimeOffset(startDateTime, TimeZoneInfo.Local.GetUtcOffset(startDateTime));
+        var endOffset = new DateTimeOffset(endDateTime, TimeZoneInfo.Local.GetUtcOffset(endDateTime));
+        string? validationError = ValidateBookingTime(spaceId, startOffset, endOffset);
+        if (validationError != null)
+        {
+            ViewBag.Result = validationError;
+            ViewBag.Spaces = _spaces;
+            return View();
+        }
+        bool isOverlap;
+        isOverlap = _bookings.Any(b =>
+                b.Space.SpaceId == spaceId &&
+                startOffset < b.EndTime &&
+                endOffset > b.StartTime);
+        if (isOverlap)
+        {
+            ViewBag.Result = "Error: This time is already taken.";
+        }
+        else
+        {
+            ViewBag.Result = "Success: This time is available!"; 
+        }
+        ViewBag.Spaces = _spaces;
+        return View();
+    }
 
     [HttpGet]
     public IActionResult BookRoom()
@@ -47,40 +99,21 @@ public class BookingController : Controller
     [ValidateAntiForgeryToken]
     public IActionResult BookRoom(int spaceId, DateTime selectedDate, TimeSpan startTime, TimeSpan endTime)
     {
-        var space = _spaces.FirstOrDefault(s => s.SpaceId == spaceId);
-        if (space == null)
-        {
-            ViewBag.Result = "Error: Room not found.";
-            ViewBag.Spaces = _spaces;
-            return View();
-        }
         var startDateTime = selectedDate.Date.Add(startTime);
         var endDateTime = selectedDate.Date.Add(endTime);
         var startOffset = new DateTimeOffset(startDateTime, TimeZoneInfo.Local.GetUtcOffset(startDateTime));
         var endOffset = new DateTimeOffset(endDateTime, TimeZoneInfo.Local.GetUtcOffset(endDateTime));
-        if (startOffset.Hour < 8 || endOffset.Hour > 23)
-        {
-            ViewBag.Result = "Error: Invalid time (8:00-23:00).";
-            ViewBag.Spaces = _spaces;
-            return View();
-        }
-        if (startOffset < DateTimeOffset.Now)
-        {
-            ViewBag.Result = "Error: Invalid time (in the past tense).";
-            ViewBag.Spaces = _spaces;
-            return View();
-        }
-        if (endOffset <= startOffset)
-        {
-            ViewBag.Result = "Error: Invalid time (end later than start).";
+        
+        var space = _spaces.FirstOrDefault(s => s.SpaceId == spaceId);
 
-        }
-        if ((endOffset - startOffset).TotalMinutes < 15)
+        string? validationError = ValidateBookingTime(spaceId, startOffset, endOffset);
+        if (validationError != null)
         {
-            ViewBag.Result = "Error: Reservation minimum 15 minutes.";
+            ViewBag.Result = validationError;
             ViewBag.Spaces = _spaces;
             return View();
         }
+
         var userEmail = User.FindFirstValue(ClaimTypes.Email);
         var fullName = User.FindFirstValue("FullName");
 
@@ -103,7 +136,7 @@ public class BookingController : Controller
         var newBooking = new Booking
         {
             BookingId = (_bookings.Any() ? _bookings.Max(b => b.BookingId) : 0) + 1,
-            Space = space,
+            Space = space!,
             UserEmail = userEmail!,
             UserFullName = fullName!,
             StartTime = startOffset,
