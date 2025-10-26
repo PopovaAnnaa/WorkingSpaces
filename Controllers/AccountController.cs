@@ -120,7 +120,7 @@ namespace WorkingSpaces.Controllers
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(claimsIdentity));
 
-            return Redirect(returnUrl ?? "/");
+            return RedirectToAction("Index", "Booking");
         }
 
         [HttpPost]

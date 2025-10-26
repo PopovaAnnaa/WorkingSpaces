@@ -29,7 +29,9 @@ builder.Services.AddAuthentication(options =>
     options.Authority = "https://dev-2a7o8mgzl3i7lh4m.us.auth0.com/";
     options.ResponseType = "code";
     options.SaveTokens = true;
-    options.CallbackPath = "/Account/ExternalLoginCallback";
+    options.CallbackPath = "/signin-oidc";
+
+;
 
     options.Scope.Add("openid");
     options.Scope.Add("profile");
