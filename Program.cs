@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Kestrel слухає HTTPS на 5189
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.ListenLocalhost(5189, listenOptions =>
@@ -12,14 +14,12 @@ builder.WebHost.ConfigureKestrel(options =>
     });
 });
 
-// MVC
 builder.Services.AddControllersWithViews();
 
-// Authentication & Authorization
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme; // "Cookies"
-    options.DefaultChallengeScheme = "Okta"; // OpenID Connect схема
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = "Okta";
 })
 .AddCookie()
 .AddOpenIdConnect("Okta", options =>
@@ -31,13 +31,10 @@ builder.Services.AddAuthentication(options =>
     options.SaveTokens = true;
     options.CallbackPath = "/signin-oidc";
 
-;
-
     options.Scope.Add("openid");
     options.Scope.Add("profile");
     options.Scope.Add("email");
 
-    // Додаткове логування для діагностики
     options.Events = new OpenIdConnectEvents
     {
         OnRedirectToIdentityProvider = context =>
@@ -48,6 +45,15 @@ builder.Services.AddAuthentication(options =>
         OnTokenValidated = context =>
         {
             Console.WriteLine("Token validated!");
+
+            // Додаємо FullName вручну
+            var nameClaim = context.Principal?.FindFirst("name")?.Value ?? "";
+            if (!string.IsNullOrEmpty(nameClaim))
+            {
+                var identity = context.Principal?.Identity as ClaimsIdentity;
+                identity?.AddClaim(new Claim("FullName", nameClaim));
+            }
+
             return Task.CompletedTask;
         },
         OnRemoteFailure = context =>
@@ -70,9 +76,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
-
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
