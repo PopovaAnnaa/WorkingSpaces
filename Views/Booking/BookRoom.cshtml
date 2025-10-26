@@ -1,25 +1,36 @@
+@using WorkingSpaces.Models
 @{
     ViewData["Title"] = "Book Room";
+    var spaces = ViewBag.Spaces as List<Space> ?? new List<Space>();
 }
 
-<form method="post" class="booking-form">
+<form method="post" class="booking-form" asp-action="BookRoom">
+    @Html.AntiForgeryToken()
     <h2>Book a Room</h2>
-    <label>Date:</label>
-    <input type="date" name="date" required />
-    
+    @if(ViewBag.Result != null)
+    {
+        <p class="result">@ViewBag.Result</p>
+    }
     <label>Room:</label>
-    <input type="text" name="room" placeholder="Enter room name" required />
+    <select name="spaceId" required class="form-control" style="width: 100%; padding: 8px 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+        <option value="">--Choose room--</option>
+        @foreach (var space in spaces)
+        {
+            <option value="@space.SpaceId">@space.Name</option>
+        }
+    </select>
     
-    <label>Username:</label>
-    <input type="text" name="username" placeholder="Enter your username" required />
+    <label>Date:</label>
+    <input type="date" name="selectedDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
     
+    <label>Start Time:</label>
+    <input type="time" name="startTime" required /> 
+    
+    <label>End Time:</label>
+    <input type="time" name="endTime" required />
+
     <button type="submit">Book</button>
 </form>
-
-@if(ViewBag.Result != null)
-{
-    <p class="result">@ViewBag.Result</p>
-}
 
 <style>
     body {
@@ -77,8 +88,13 @@
 
     .result {
         text-align: center;
-        margin-top: 15px;
-        color: #333;
+        margin-top: 0px; 
+        margin-bottom: 15px; 
+        background-color: #f8d7da;
+        color: #721c24;
         font-weight: bold;
+        padding: 10px;
+        border: 1px solid #f5c6cb;
+        border-radius: 6px;
     }
 </style>
