@@ -13,9 +13,9 @@ public class BookingController : Controller
     {
         _spaces.AddRange(new List<Space>
             {
-                new Space { SpaceId = 1, Name = "Кімната для нарад (12)", NumberOfSeats = 12, AvailableEquipment = Equipment.TV | Equipment.Board },
-                new Space { SpaceId = 2, Name = "Конференц-зал (10)", NumberOfSeats = 10, AvailableEquipment = Equipment.Projector | Equipment.Computers },
-                new Space { SpaceId = 3, Name = "Конфіденційна кімната (5)", NumberOfSeats = 5, AvailableEquipment = Equipment.Board },
+                new Space { SpaceId = 1, Name = "Meeting room (12)", NumberOfSeats = 12, AvailableEquipment = Equipment.TV | Equipment.Board },
+                new Space { SpaceId = 2, Name = "Conference hall (10)", NumberOfSeats = 10, AvailableEquipment = Equipment.Projector | Equipment.Computers },
+                new Space { SpaceId = 3, Name = "Confidential room (5)", NumberOfSeats = 5, AvailableEquipment = Equipment.Board },
             });
     }
         
@@ -150,14 +150,41 @@ public class BookingController : Controller
     [HttpGet]
     public IActionResult CancelBooking()
     {
-        return View();
+        var userEmail = User.FindFirstValue(ClaimTypes.Email);
+        if (userEmail == null)
+        {
+            return Unauthorized(); 
+        }
+        List<Booking> myBookings;
+        myBookings = _bookings
+                .Where(b => b.UserEmail == userEmail)
+                .OrderBy(b => b.StartTime)
+                .ToList();
+        return View(myBookings);
     }
 
     [HttpPost]
-    // public IActionResult CancelBooking()
-    // {
-    //     return View();
-    // }
+    [ValidateAntiForgeryToken]
+    public IActionResult CancelBooking(int bookingId)
+    {
+        var userEmail = User.FindFirstValue(ClaimTypes.Email);
+        var booking = _bookings.FirstOrDefault(b => b.BookingId == bookingId);
+        if (booking == null)
+        {
+            TempData["CancelResult"] = "Error: Booking not found.";
+        }
+        else if (booking.UserEmail != userEmail)
+        {
+            TempData["CancelResult"] = "Error: You cannot cancel someone else's booking.";
+        }
+        else
+        {
+            _bookings.Remove(booking);
+            TempData["CancelResult"] = "Success: Booking canceled.";
+        }
+        return RedirectToAction("CancelBooking");
+    }
+
     [HttpGet]
     public IActionResult ListBookings()
     {
