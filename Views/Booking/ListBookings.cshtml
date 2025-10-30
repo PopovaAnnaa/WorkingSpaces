@@ -1,7 +1,7 @@
 @model List<WorkingSpaces.Models.Booking>
 
 
-<h2>Усі бронювання</h2>
+<h2>All bookings</h2>
 
 <table border="1">
     <tr>
@@ -16,11 +16,11 @@
     {
         <tr>
             <td>@booking.Space.Name</td>
-            <td>@booking.StartTime.ToString("dd.MM.yyyy")</td>
-            <td>@booking.StartTime.ToString("HH:mm")</td>
-            <td>@booking.EndTime.ToString("HH:mm")</td>
-            <td>@booking.UserEmail</td>
-            <td>@booking.UserFullName</td>
+            <td>@booking.StartTime.ToLocalTime().ToString("dd.MM.yyyy")</td>
+            <td>@booking.StartTime.ToLocalTime().ToString("HH:mm")</td>
+            <td>@booking.EndTime.ToLocalTime().ToString("HH:mm")</td>
+            <td>@booking.User.Email</td>
+            <td>@booking.User.FullName</td>
         </tr>
     }
 </table>

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using WorkingSpaces.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,28 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 builder.Services.AddControllersWithViews();
+
+string provider = builder.Configuration.GetValue("DatabaseProvider", "InMemory")!;
+string? connectionString = builder.Configuration.GetConnectionString(provider);
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    switch (provider)
+    {
+        case "MsSql":
+            options.UseSqlServer(builder.Configuration.GetConnectionString("MsSql"));
+            break;
+        case "Postgres":
+            options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"));
+            break;
+        case "Sqlite":
+            options.UseSqlite(builder.Configuration.GetConnectionString("Sqlite"));
+            break;
+        case "InMemory":
+        default:
+            options.UseInMemoryDatabase("WorkingSpacesDb");
+            break;
+    }
+});
 
 builder.Services.AddAuthentication(options =>
 {
@@ -46,7 +70,6 @@ builder.Services.AddAuthentication(options =>
         {
             Console.WriteLine("Token validated!");
 
-            // Додаємо FullName вручну
             var nameClaim = context.Principal?.FindFirst("name")?.Value ?? "";
             if (!string.IsNullOrEmpty(nameClaim))
             {
@@ -68,6 +91,23 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        if (context.Database.IsInMemory())
+        {
+            context.Database.EnsureCreated(); 
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred seeding the DB.");
+    }
+}
 
 if (!app.Environment.IsDevelopment())
 {

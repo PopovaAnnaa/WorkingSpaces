@@ -29,9 +29,9 @@
             <tr>
                 <td>@booking.BookingId</td>
                 <td>@booking.Space.Name</td>
-                <td>@booking.StartTime.ToString("dd.MM.yyyy")</td>
-                <td>@booking.StartTime.ToString("HH:mm")</td>
-                <td>@booking.EndTime.ToString("HH:mm")</td>
+                <td>@booking.StartTime.ToLocalTime().ToString("dd.MM.yyyy")</td>
+                <td>@booking.StartTime.ToLocalTime().ToString("HH:mm")</td>
+                <td>@booking.EndTime.ToLocalTime().ToString("HH:mm")</td>
                 <td>
                     <form method="post" asp-action="CancelBooking" 
                           onsubmit="return confirm('Are you sure about your choice?');">

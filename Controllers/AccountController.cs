@@ -1,17 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Concurrent;
 using WorkingSpaces.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using WorkingSpaces.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace WorkingSpaces.Controllers
 {
     public class AccountController : Controller
     {
-        private static readonly ConcurrentDictionary<Guid, User> _inMemoryUsers =
-            new ConcurrentDictionary<Guid, User>();
+        private readonly ApplicationDbContext _context;
+        public AccountController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
         [HttpGet]
         public IActionResult Register()
@@ -21,13 +25,15 @@ namespace WorkingSpaces.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            if (_inMemoryUsers.Values.Any(u => u.Username.Equals(model.UserName, StringComparison.OrdinalIgnoreCase)))
+            var userNameLower = model.UserName.ToLower();
+            if (await _context.Users.AnyAsync(u => u.Username == userNameLower))
             {
                 ModelState.AddModelError(nameof(model.UserName), "This username is already taken.");
             }
-            if (_inMemoryUsers.Values.Any(u => u.Email.Equals(model.Email, StringComparison.OrdinalIgnoreCase)))
+            var emailLower = model.Email.ToLower();
+            if (await _context.Users.AnyAsync(u => u.Email == emailLower))
             {
                 ModelState.AddModelError(nameof(model.Email), "This email is already in use.");
             }
@@ -38,15 +44,24 @@ namespace WorkingSpaces.Controllers
                 var newUser = new User
                 {
                     UserId = Guid.NewGuid(),
-                    Username = model.UserName.ToLower(),
+                    Username = userNameLower,
                     FullName = model.FullName,
                     Password = passwordHash,
                     PhoneNumber = model.PhoneNumber,
-                    Email = model.Email.ToLower()
+                    Email = emailLower
                 };
-                _inMemoryUsers.TryAdd(newUser.UserId, newUser);
+                _context.Users.Add(newUser);
 
-                return RedirectToAction("Login");
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction("Login");
+                }
+                catch (DbUpdateException) 
+                {
+                    ModelState.AddModelError(string.Empty, "This username or email is already taken.");
+                    return View(model);
+                }
             }
             return View(model);
         }
@@ -64,8 +79,9 @@ namespace WorkingSpaces.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var user = _inMemoryUsers.Values.FirstOrDefault(u =>
-                u.Username.Equals(model.UserName, StringComparison.OrdinalIgnoreCase));
+            var userNameLower = model.UserName.ToLower();
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                u.Username == userNameLower);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
             {
@@ -75,6 +91,7 @@ namespace WorkingSpaces.Controllers
 
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim("FullName", user.FullName)

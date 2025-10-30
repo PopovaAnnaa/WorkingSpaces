@@ -40,3 +40,7 @@ packages/
 /obj
 /bin/Debug
 /obj/Debug/net8.0
+
+# DB
+*.db
+.env

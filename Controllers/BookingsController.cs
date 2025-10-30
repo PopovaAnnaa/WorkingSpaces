@@ -2,21 +2,16 @@ using WorkingSpaces.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using WorkingSpaces.Data;
+using Microsoft.EntityFrameworkCore;
 
 [Authorize]
 public class BookingController : Controller
 {
-    private static readonly List<Space> _spaces = new List<Space>();
-    private static readonly List<Booking> _bookings = new List<Booking>();
-
-    static BookingController()
+    private readonly ApplicationDbContext _context;
+    public BookingController(ApplicationDbContext context)
     {
-        _spaces.AddRange(new List<Space>
-            {
-                new Space { SpaceId = 1, Name = "Meeting room (12)", NumberOfSeats = 12, AvailableEquipment = Equipment.TV | Equipment.Board },
-                new Space { SpaceId = 2, Name = "Conference hall (10)", NumberOfSeats = 10, AvailableEquipment = Equipment.Projector | Equipment.Computers },
-                new Space { SpaceId = 3, Name = "Confidential room (5)", NumberOfSeats = 5, AvailableEquipment = Equipment.Board },
-            });
+        _context = context;
     }
         
     public IActionResult Index()
@@ -24,9 +19,9 @@ public class BookingController : Controller
         return View();
     }
 
-    private string? ValidateBookingTime(int spaceId, DateTimeOffset startOffset, DateTimeOffset endOffset)
+    private async Task<string?> ValidateBookingTime(int spaceId, DateTimeOffset startOffset, DateTimeOffset endOffset)
     {
-        if (_spaces.All(s => s.SpaceId != spaceId))
+        if (!await _context.Spaces.AnyAsync(s => s.SpaceId == spaceId))
         {
             return "Error: Room not found.";
         }
@@ -50,32 +45,47 @@ public class BookingController : Controller
     }
     
     [HttpGet]
-    public IActionResult CheckAvailability()
+    public async Task<IActionResult> CheckAvailability()
     {
-        ViewBag.Spaces = _spaces;
+        ViewBag.Spaces = await _context.Spaces.OrderBy(s => s.Name).ToListAsync();
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult CheckAvailability(int spaceId, DateTime selectedDate, TimeSpan startTime, TimeSpan endTime)
+    public async Task<IActionResult> CheckAvailability(int spaceId, DateTime selectedDate, TimeSpan startTime, TimeSpan endTime)
     {
+        ViewBag.Spaces = await _context.Spaces.OrderBy(s => s.Name).ToListAsync();
         var startDateTime = selectedDate.Date.Add(startTime);
         var endDateTime = selectedDate.Date.Add(endTime);
         var startOffset = new DateTimeOffset(startDateTime, TimeZoneInfo.Local.GetUtcOffset(startDateTime));
         var endOffset = new DateTimeOffset(endDateTime, TimeZoneInfo.Local.GetUtcOffset(endDateTime));
-        string? validationError = ValidateBookingTime(spaceId, startOffset, endOffset);
+        string? validationError = await ValidateBookingTime(spaceId, startOffset, endOffset);
         if (validationError != null)
         {
             ViewBag.Result = validationError;
-            ViewBag.Spaces = _spaces;
             return View();
         }
+
+        var startOffsetUtc = startOffset.ToUniversalTime();
+        var endOffsetUtc = endOffset.ToUniversalTime();
         bool isOverlap;
-        isOverlap = _bookings.Any(b =>
-                b.Space.SpaceId == spaceId &&
-                startOffset < b.EndTime &&
-                endOffset > b.StartTime);
+        if (_context.Database.IsSqlite())
+        {
+            var bookingsForRoom = await _context.Bookings
+            .Where(b => b.SpaceId == spaceId)
+            .ToListAsync();
+            isOverlap = bookingsForRoom.Any(b =>
+            startOffsetUtc < b.EndTime &&
+            endOffsetUtc > b.StartTime);
+        }
+        else
+        {
+            isOverlap = await _context.Bookings.AnyAsync(b =>
+            b.SpaceId == spaceId &&
+            startOffsetUtc < b.EndTime &&
+            endOffsetUtc > b.StartTime);
+        }
         if (isOverlap)
         {
             ViewBag.Result = "Error: This time is already taken.";
@@ -84,112 +94,165 @@ public class BookingController : Controller
         {
             ViewBag.Result = "Success: This time is available!"; 
         }
-        ViewBag.Spaces = _spaces;
         return View();
     }
 
     [HttpGet]
-    public IActionResult BookRoom()
+    public async Task<IActionResult> BookRoom()
     {
-        ViewBag.Spaces = _spaces;
+        ViewBag.Spaces = await _context.Spaces.OrderBy(s => s.Name).ToListAsync();
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult BookRoom(int spaceId, DateTime selectedDate, TimeSpan startTime, TimeSpan endTime)
+    public async Task<IActionResult> BookRoom(int spaceId, DateTime selectedDate, TimeSpan startTime, TimeSpan endTime)
     {
+        ViewBag.Spaces = await _context.Spaces.OrderBy(s => s.Name).ToListAsync();
+        
         var startDateTime = selectedDate.Date.Add(startTime);
         var endDateTime = selectedDate.Date.Add(endTime);
         var startOffset = new DateTimeOffset(startDateTime, TimeZoneInfo.Local.GetUtcOffset(startDateTime));
         var endOffset = new DateTimeOffset(endDateTime, TimeZoneInfo.Local.GetUtcOffset(endDateTime));
-        
-        var space = _spaces.FirstOrDefault(s => s.SpaceId == spaceId);
 
-        string? validationError = ValidateBookingTime(spaceId, startOffset, endOffset);
+        string? validationError = await ValidateBookingTime(spaceId, startOffset, endOffset);
         if (validationError != null)
         {
             ViewBag.Result = validationError;
-            ViewBag.Spaces = _spaces;
             return View();
         }
 
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        var fullName = User.FindFirstValue("FullName");
+        var startOffsetUtc = startOffset.ToUniversalTime();
+        var endOffsetUtc = endOffset.ToUniversalTime();
 
-        if (userEmail == null || fullName == null)
+        bool isOverlap;
+        if (_context.Database.IsSqlite())
         {
-            return Unauthorized();
+            var bookingsForRoom = await _context.Bookings
+            .Where(b => b.SpaceId == spaceId)
+            .ToListAsync();
+
+            isOverlap = bookingsForRoom.Any(b =>
+            startOffsetUtc < b.EndTime &&
+            endOffsetUtc > b.StartTime);
+        }
+        else
+        {
+            isOverlap = await _context.Bookings.AnyAsync(b =>
+            b.SpaceId == spaceId &&
+            startOffsetUtc < b.EndTime &&
+            endOffsetUtc > b.StartTime);
+        }
+        if (isOverlap)
+        {
+            ViewBag.Result = "Error: This time is already taken.";
+            return View();
+        }
+            
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized(); 
+        }
+        var userId = Guid.Parse(userIdString);
+        var user = await _context.Users.FindAsync(userId);
+        var space = await _context.Spaces.FindAsync(spaceId);
+        if (user == null || space == null)
+        {
+            ViewBag.Result = "Error: User or Space not found.";
+            return View();
         }
 
-        bool isOverlap = _bookings.Any(b =>
-            b.Space.SpaceId == spaceId &&
-            startOffset < b.EndTime &&
-            endOffset > b.StartTime);
-
-        if (isOverlap)
-            {
-                ViewBag.Result = "Error: This time is already taken.";
-                ViewBag.Spaces = _spaces;
-                return View();
-            }
         var newBooking = new Booking
         {
-            BookingId = (_bookings.Any() ? _bookings.Max(b => b.BookingId) : 0) + 1,
-            Space = space!,
-            UserEmail = userEmail!,
-            UserFullName = fullName!,
-            StartTime = startOffset,
-            EndTime = endOffset
+            SpaceId = spaceId,
+            UserId = userId,
+            StartTime = startOffsetUtc, 
+            EndTime = endOffsetUtc,  
+            User = user,
+            Space = space
         };
-        _bookings.Add(newBooking);
-        ViewBag.Spaces = _spaces;
+        _context.Bookings.Add(newBooking);
+        await _context.SaveChangesAsync();
         return RedirectToAction("ListBookings");
     }
 
     [HttpGet]
-    public IActionResult CancelBooking()
+    public async Task<IActionResult> CancelBooking()
     {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        if (userEmail == null)
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
         {
             return Unauthorized(); 
         }
+        var userId = Guid.Parse(userIdString);
+
         List<Booking> myBookings;
-        myBookings = _bookings
-                .Where(b => b.UserEmail == userEmail)
-                .OrderBy(b => b.StartTime)
-                .ToList();
-        return View(myBookings);
+        var query = _context.Bookings
+            .Include(b => b.Space)
+            .Include(b => b.User)
+            .Where(b => b.UserId == userId);
+        if (_context.Database.IsSqlite())
+        {
+            var bookingsFromDb = await query.ToListAsync();
+            myBookings = bookingsFromDb.OrderBy(b => b.StartTime).ToList();
+        }
+        else
+        {
+            myBookings = await query
+            .OrderBy(b => b.StartTime)
+            .ToListAsync();
+        }
+            return View(myBookings);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult CancelBooking(int bookingId)
+    public async Task<IActionResult> CancelBooking(int bookingId)
     {
-        var userEmail = User.FindFirstValue(ClaimTypes.Email);
-        var booking = _bookings.FirstOrDefault(b => b.BookingId == bookingId);
+        var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userIdString))
+        {
+            return Unauthorized();
+        }
+        var userId = Guid.Parse(userIdString);
+        
+        var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == bookingId);
         if (booking == null)
         {
             TempData["CancelResult"] = "Error: Booking not found.";
         }
-        else if (booking.UserEmail != userEmail)
-        {
-            TempData["CancelResult"] = "Error: You cannot cancel someone else's booking.";
-        }
+        else if (booking.UserId != userId)
+    {
+        TempData["CancelResult"] = "Error: You cannot cancel someone else's booking.";
+    }
         else
         {
-            _bookings.Remove(booking);
+            _context.Bookings.Remove(booking);
+            await _context.SaveChangesAsync();
             TempData["CancelResult"] = "Success: Booking canceled.";
         }
         return RedirectToAction("CancelBooking");
     }
 
     [HttpGet]
-    public IActionResult ListBookings()
+    public async Task<IActionResult> ListBookings()
     {
         List<Booking> currentBookings;
-        currentBookings = _bookings.OrderBy(b => b.StartTime).ToList();
+        var query = _context.Bookings
+            .Include(b => b.Space)
+            .Include(b => b.User);
+        if (_context.Database.IsSqlite())
+        {
+            var bookingsFromDb = await query.ToListAsync();
+            currentBookings = bookingsFromDb.OrderBy(b => b.StartTime).ToList();
+        }
+        else
+        {
+            currentBookings = await query
+                .OrderBy(b => b.StartTime)
+                .ToListAsync();
+        }
         return View(currentBookings);
     }
 }
