@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 public class User
 {
+    internal readonly int Id;
+
     [Key]
     public Guid UserId { get; set; }
     [Required]

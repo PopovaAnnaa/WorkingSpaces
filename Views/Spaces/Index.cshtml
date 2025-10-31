@@ -1,25 +1,27 @@
-@model List<WorkingSpaces.Models.Booking>
+@model IEnumerable<WorkingSpaces.Models.Space>
 
-<h2>All Bookings</h2>
+@{
+    ViewData["Title"] = "Spaces";
+}
 
-<table>
+<h1 class="mb-3">Spaces</h1>
+
+<table class="table table-striped">
     <thead>
         <tr>
-            <th>Room Name</th>
-            <th>Date</th>
-            <th>User Name</th>
-            <th></th>
+            <th>Name</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var booking in Model)
+        @foreach (var space in Model)
         {
             <tr>
-                <td>@booking.Space?.Name</td>
-                <td>@booking.StartTime.ToLocalTime().ToString("dd.MM.yyyy")</td>
-                <td>@booking.User?.FullName</td>
+                <td>@space.Name</td>
                 <td>
-                    <a asp-action="Details" asp-route-id="@booking.BookingId" class="btn-details">Details</a>
+                    <a asp-action="Details" asp-route-id="@space.SpaceId" class="btn btn-primary btn-sm">
+                        View Details
+                    </a>
                 </td>
             </tr>
         }
@@ -32,9 +34,10 @@
         font-family: Arial, sans-serif;
     }
 
-    h2 {
+    h1 {
         text-align: center;
         margin: 40px 0 20px;
+        color: #4b0082;
     }
 
     table {
@@ -73,6 +76,7 @@
         padding: 6px 12px;
         border-radius: 6px;
         transition: 0.2s;
+        display: inline-block;
     }
 
     .btn-details:hover {

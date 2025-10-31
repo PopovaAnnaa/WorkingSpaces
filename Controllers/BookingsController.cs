@@ -255,4 +255,26 @@ public class BookingController : Controller
         }
         return View(currentBookings);
     }
+
+    public IActionResult Details(int id)
+    {
+        var booking = _context.Bookings
+            .Where(b => b.BookingId == id)
+            .Select(b => new Booking
+            {
+                BookingId = b.BookingId,
+                StartTime = b.StartTime,
+                EndTime = b.EndTime,
+                Space = b.Space,
+                User = b.User
+            })
+            .FirstOrDefault();
+
+        if (booking == null)
+        {
+            return NotFound();
+        }
+
+        return View(booking);
+    }
 }

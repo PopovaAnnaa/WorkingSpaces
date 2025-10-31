@@ -1,0 +1,72 @@
+@model WorkingSpaces.Models.User
+
+@{
+    ViewData["Title"] = "User Details";
+}
+
+<h1>User Details</h1>
+
+<div class="user-details">
+    <h2>@Model.FullName</h2>
+    
+    <div class="detail"><strong>Email:</strong> <span>@Model.Email</span></div>
+    <div class="detail"><strong>Full Name</strong> <span>@Model.FullName</span></div>
+    <div class="detail"><strong>Phone Number</strong> <span>@Model.PhoneNumber</span></div>
+
+    <a asp-action="Index" class="btn-back">Back to list</a>
+</div>
+
+<style>
+    body {
+        background-color: #f5f4f8;
+        font-family: Arial, sans-serif;
+    }
+
+    h1 {
+        text-align: center;
+        margin-top: 40px;
+        color: #4b0082;
+    }
+
+    .user-details {
+        width: 60%;
+        margin: 30px auto;
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-details h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #6a0dad;
+    }
+
+    .detail {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 16px;
+    }
+
+    .detail strong {
+        color: #6a0dad;
+    }
+
+    .btn-back {
+        display: inline-block;
+        margin-top: 25px;
+        text-decoration: none;
+        background-color: #6a0dad;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: 0.2s;
+    }
+
+    .btn-back:hover {
+        background-color: #520a9b;
+    }
+</style>

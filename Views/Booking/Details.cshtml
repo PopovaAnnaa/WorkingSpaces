@@ -1,0 +1,84 @@
+@model WorkingSpaces.Models.Booking
+
+<h2>Booking Details</h2>
+
+<div class="booking-details">
+    <div class="detail">
+        <strong>Room Name:</strong>
+        <span>@Model.Space?.Name</span>
+    </div>
+
+    <div class="detail">
+        <strong>Date:</strong>
+        <span>@Model.StartTime.ToLocalTime().ToString("dd.MM.yyyy")</span>
+    </div>
+
+    <div class="detail">
+        <strong>Start Time:</strong>
+        <span>@Model.StartTime.ToLocalTime().ToString("HH:mm")</span>
+    </div>
+
+    <div class="detail">
+        <strong>End Time:</strong>
+        <span>@Model.EndTime.ToLocalTime().ToString("HH:mm")</span>
+    </div>
+
+    <div class="detail">
+        <strong>User Email:</strong>
+        <span>@Model.User?.Email</span>
+    </div>
+
+    <div class="detail">
+        <strong>User Full Name:</strong>
+        <span>@Model.User?.FullName</span>
+    </div>
+
+    <a asp-action="ListBookings" class="btn-back">← Back to list</a>
+</div>
+
+<style>
+    body {
+        background-color: #f5f4f8;
+        font-family: Arial, sans-serif;
+    }
+
+    h2 {
+        text-align: center;
+        margin-top: 50px;
+    }
+
+    .booking-details {
+        width: 60%;
+        margin: 30px auto;
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .detail {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .detail strong {
+        color: #6a0dad;
+    }
+
+    .btn-back {
+        display: inline-block;
+        margin-top: 20px;
+        text-decoration: none;
+        background-color: #6a0dad;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: 0.2s;
+    }
+
+    .btn-back:hover {
+        background-color: #520a9b;
+    }
+</style>
