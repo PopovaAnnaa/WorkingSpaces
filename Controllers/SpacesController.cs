@@ -12,7 +12,6 @@ public class SpacesController : Controller
         _context = context;
     }
 
-    // GET: /Spaces
     public IActionResult Index()
     {
         var spaces = _context.Spaces
@@ -21,7 +20,6 @@ public class SpacesController : Controller
         return View(spaces);
     }
 
-    // GET: /Spaces/Details/5
     public IActionResult Details(int id)
     {
         var space = _context.Spaces
