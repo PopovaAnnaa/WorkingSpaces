@@ -20,7 +20,7 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 builder.Services.AddControllersWithViews();
-
+builder.Services.AddControllers().AddJsonOptions(opts => {   opts.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()); });
 string provider = builder.Configuration.GetValue("DatabaseProvider", "InMemory")!;
 string? connectionString = builder.Configuration.GetConnectionString(provider);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

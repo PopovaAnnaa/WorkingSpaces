@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 public class Space
 {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.None)]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int SpaceId { get; set; }
     [Required]
     [StringLength(100, ErrorMessage = "The name is too long (maximum 100 characters)")]
