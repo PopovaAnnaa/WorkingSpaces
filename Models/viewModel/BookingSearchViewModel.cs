@@ -16,7 +16,7 @@ namespace WorkspaceApp.Models
         public int BookingId { get; set; }
         public string? UserName { get; set; }
         public string? SpaceName { get; set; }
-        public DateTimeOffset StartTime { get; set; }  // використовуємо DateTimeOffset для правильного SQL
+        public DateTimeOffset StartTime { get; set; } 
         public DateTimeOffset EndTime { get; set; }
     }
 }
