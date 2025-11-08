@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
@@ -17,7 +20,7 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 builder.Services.AddControllersWithViews();
-
+builder.Services.AddControllers().AddJsonOptions(opts => {   opts.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()); });
 string provider = builder.Configuration.GetValue("DatabaseProvider", "InMemory")!;
 string? connectionString = builder.Configuration.GetConnectionString(provider);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -85,6 +88,22 @@ builder.Services.AddAuthentication(options =>
             context.HandleResponse();
             return Task.CompletedTask;
         }
+    };
+})
+.AddJwtBearer(options =>
+{
+    options.SaveToken = true;
+    options.RequireHttpsMetadata = false;
+    options.TokenValidationParameters = new TokenValidationParameters()
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     };
 });
 

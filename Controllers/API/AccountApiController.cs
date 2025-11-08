@@ -1,0 +1,143 @@
+using Microsoft.AspNetCore.Mvc;
+using WorkingSpaces.Data;
+using WorkingSpaces.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authorization;
+using WorkingSpaces.Models.Dto;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+
+namespace WorkingSpaces.Controllers.Api
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AccountApiController : ControllerBase
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _config;
+
+        public AccountApiController(ApplicationDbContext context, IConfiguration config)
+        {
+            _context = context;
+            _config = config;
+        }
+
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register(RegisterViewModel model)
+        {
+            var userNameLower = model.UserName.ToLower();
+            if (await _context.Users.AnyAsync(u => u.Username == userNameLower))
+            {
+                ModelState.AddModelError(nameof(model.UserName), "This username is already taken.");
+            }
+            var emailLower = model.Email.ToLower();
+            if (await _context.Users.AnyAsync(u => u.Email == emailLower))
+            {
+                ModelState.AddModelError(nameof(model.Email), "This email is already in use.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
+            var newUser = new User
+            {
+                UserId = Guid.NewGuid(),
+                Username = userNameLower,
+                FullName = model.FullName,
+                Password = passwordHash,
+                PhoneNumber = model.PhoneNumber,
+                Email = emailLower
+            };
+            _context.Users.Add(newUser);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "User registered successfully" });
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError(string.Empty, "An error occurred. Username or email might be taken.");
+                return BadRequest(ModelState);
+            }
+        }
+
+        private string GenerateJwtToken(User user)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("FullName", user.FullName)
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddHours(1),
+                signingCredentials: credentials);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userNameLower = model.UserName.ToLower();
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userNameLower);
+
+            if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
+            {
+                return Unauthorized(new { message = "Invalid username or password" });
+            }
+            var tokenString = GenerateJwtToken(user);
+            return Ok(new
+            {
+                token = tokenString,
+                message = "Login successful"
+            });
+        }
+        [HttpGet("profile")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> Profile()
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _context.Users.FindAsync(Guid.Parse(userIdString));
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var userDto = new UserDto
+            {
+                UserId = user.UserId,
+                Username = user.Username,
+                FullName = user.FullName,
+                PhoneNumber = user.PhoneNumber,
+                Email = user.Email
+            };
+
+            return Ok(userDto);
+        }
+    }
+}
