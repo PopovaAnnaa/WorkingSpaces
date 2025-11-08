@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WorkingSpaces.Data;
-using WorkspaceApp.Models; // наші моделі
+using WorkspaceApp.Models;
 
 namespace WorkingSpaces.Controllers
 {
@@ -22,7 +22,6 @@ namespace WorkingSpaces.Controllers
         [HttpPost]
         public IActionResult Index(BookingSearchViewModel model)
         {
-            // Завантажуємо всі дані з бази без Where
             var query = from b in _context.Bookings
                         join u in _context.Users on b.UserId equals u.UserId
                         join s in _context.Spaces on b.SpaceId equals s.SpaceId
@@ -35,7 +34,6 @@ namespace WorkingSpaces.Controllers
                             b.EndTime
                         };
 
-            // Переводимо у пам'ять
             var list = query.AsEnumerable()
                             .Select(x => new BookingResult
                             {
@@ -46,7 +44,6 @@ namespace WorkingSpaces.Controllers
                                 EndTime = x.EndTime
                             });
 
-            // Фільтри на клієнті
             if (model.StartDate.HasValue)
                 list = list.Where(x => x.StartTime >= model.StartDate.Value);
 
