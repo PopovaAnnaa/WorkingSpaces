@@ -1,69 +1,73 @@
 using Microsoft.AspNetCore.Mvc;
 using WorkingSpaces.Models;
+using WorkingSpaces.Models.Dto;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using WorkingSpaces.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Security.Claims;
 
 namespace WorkingSpaces.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        public AccountController(ApplicationDbContext context)
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly string _apiBaseUrl;
+        public AccountController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
-            _context = context;
-        }
-
-        [HttpGet]
-        public IActionResult Register()
-        {
-            return View();
+            _httpClientFactory = httpClientFactory;
+            _apiBaseUrl = configuration.GetValue<string>("ApiBaseUrl")
+                          ?? throw new ArgumentNullException("There is no ApiBaseUrl in appsettings.json");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
-            var userNameLower = model.UserName.ToLower();
-            if (await _context.Users.AnyAsync(u => u.Username == userNameLower))
+            if (!ModelState.IsValid)
             {
-                ModelState.AddModelError(nameof(model.UserName), "This username is already taken.");
-            }
-            var emailLower = model.Email.ToLower();
-            if (await _context.Users.AnyAsync(u => u.Email == emailLower))
-            {
-                ModelState.AddModelError(nameof(model.Email), "This email is already in use.");
+                return View(model);
             }
 
-            if (ModelState.IsValid)
-            {
-                string passwordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
-                var newUser = new User
-                {
-                    UserId = Guid.NewGuid(),
-                    Username = userNameLower,
-                    FullName = model.FullName,
-                    Password = passwordHash,
-                    PhoneNumber = model.PhoneNumber,
-                    Email = emailLower
-                };
-                _context.Users.Add(newUser);
+            var client = _httpClientFactory.CreateClient();
 
+            var response = await client.PostAsJsonAsync($"{_apiBaseUrl}/api/accountapi/register", model);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return RedirectToAction("Login");
+            }
+            else
+            {
                 try
                 {
-                    await _context.SaveChangesAsync();
-                    return RedirectToAction("Login");
+                    var errorData = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+                    if (errorData != null && errorData.Errors.Any())
+                    {
+                        foreach (var error in errorData.Errors)
+                        {
+                            foreach (var message in error.Value)
+                            {
+                                ModelState.AddModelError(error.Key, message);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ModelState.AddModelError(string.Empty, "An error occurred while registering.");
+                    }
                 }
-                catch (DbUpdateException) 
+                catch
                 {
-                    ModelState.AddModelError(string.Empty, "This username or email is already taken.");
-                    return View(model);
+                    ModelState.AddModelError(string.Empty, "An unexpected API error occurred.");
                 }
+                return View(model);
             }
-            return View(model);
         }
 
         [HttpGet]
@@ -79,63 +83,59 @@ namespace WorkingSpaces.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var userNameLower = model.UserName.ToLower();
-            var user = await _context.Users.FirstOrDefaultAsync(u =>
-                u.Username == userNameLower);
+            var client = _httpClientFactory.CreateClient();
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.Password))
+            var loginResponse = await client.PostAsJsonAsync($"{_apiBaseUrl}/api/accountapi/login", model);
+
+            if (!loginResponse.IsSuccessStatusCode)
             {
-                ModelState.AddModelError(string.Empty, "Invalid username or password.");
+                ModelState.AddModelError(string.Empty, "Incorrect username or password.");
+                return View(model);
+            }
+
+            var loginResult = await loginResponse.Content.ReadFromJsonAsync<LoginApiResponse>();
+            if (loginResult == null || string.IsNullOrEmpty(loginResult.Token))
+            {
+                ModelState.AddModelError(string.Empty, "Failed to get token from API.");
+                return View(model);
+            }
+
+            var token = loginResult.Token;
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var profileResponse = await client.GetAsync($"{_apiBaseUrl}/api/accountapi/profile");
+
+            if (!profileResponse.IsSuccessStatusCode)
+            {
+                ModelState.AddModelError(string.Empty, "Login successful, but unable to retrieve profile.");
+                return View(model);
+            }
+
+            var userProfile = await profileResponse.Content.ReadFromJsonAsync<UserDto>();
+            if (userProfile == null)
+            {
+                ModelState.AddModelError(string.Empty, "Failed to read profile data.");
                 return View(model);
             }
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim("FullName", user.FullName)
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userProfile.UserId.ToString()),
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, userProfile.Username),
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, userProfile.Email),
+                new System.Security.Claims.Claim("FullName", userProfile.FullName),
+                
+                new System.Security.Claims.Claim("jwt_token", token)
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = true
-            };
+            var authProperties = new AuthenticationProperties { IsPersistent = true };
 
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
+                new System.Security.Claims.ClaimsPrincipal(claimsIdentity),
                 authProperties);
-
-            return RedirectToAction("Index", "Booking");
-        }
-
-        [HttpGet]
-        public IActionResult ExternalLogin(string provider, string? returnUrl = null)
-        {
-            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
-            var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
-            return Challenge(properties, provider); 
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null)
-        {
-            var result = await HttpContext.AuthenticateAsync("Okta");
-
-            if (result?.Principal == null)
-            {
-                Console.WriteLine("ExternalLoginCallback failed: Principal is null");
-                return RedirectToAction("Login");
-            }
-
-            var claimsIdentity = new ClaimsIdentity(result.Principal.Claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity));
 
             return RedirectToAction("Index", "Booking");
         }
@@ -148,21 +148,57 @@ namespace WorkingSpaces.Controllers
             return RedirectToAction("Login");
         }
 
-        [Authorize]
-        public IActionResult Profile()
+        [Authorize] 
+        public async Task<IActionResult> Profile()
         {
-            var username = User.FindFirstValue(ClaimTypes.Name);
-            var email = User.FindFirstValue(ClaimTypes.Email);
-            var fullName = User.FindFirstValue("FullName");
+            var token = User.FindFirstValue("jwt_token");
 
-            var model = new ProfileViewModel
+            if (string.IsNullOrEmpty(token))
             {
-                Username = username ?? "",
-                Email = email ?? "",
-                FullName = fullName ?? "",
-            };
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToAction("Login");
+            }
 
-            return View(model);
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync($"{_apiBaseUrl}/api/accountapi/profile");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var userDto = await response.Content.ReadFromJsonAsync<UserDto>();
+                if (userDto == null)
+                {
+                    return RedirectToAction("Login");
+                }
+                var model = new ProfileViewModel
+                {
+                    Username = userDto.Username,
+                    Email = userDto.Email,
+                    FullName = userDto.FullName,
+                };
+
+                return View(model);
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToAction("Login");
+            }
+            else
+            {
+                TempData["Error"] = "Failed to load profile from API.";
+                return RedirectToAction("Index", "Booking");
+            }
         }
+    }
+
+    public class LoginApiResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("token")]
+        public string Token { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonPropertyName("message")]
+        public string Message { get; set; } = string.Empty;
     }
 }
