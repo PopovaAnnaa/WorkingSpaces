@@ -89,25 +89,8 @@ namespace WorkingSpaces.Controllers.Api
             }
         }
 
-        [HttpPost("check-availability")]
-        public async Task<IActionResult> CheckAvailability(CreateBookingDto dto)
-        {
-            var kyivZone = GetKyivTimeZone();
-
-            var startOffset = new DateTimeOffset(dto.StartTime, kyivZone.GetUtcOffset(dto.StartTime));
-            var endOffset = new DateTimeOffset(dto.EndTime, kyivZone.GetUtcOffset(dto.EndTime));
-            
-            var validationError = await ValidateBookingTime(dto.SpaceId, startOffset, endOffset);
-            if (validationError != null)
-            {
-                return validationError;
-            }
-
-            return Ok(new { message = "Success: This time is available!" });
-        }
-
         [HttpPost]
-        public async Task<IActionResult> CreateBooking(CreateBookingDto dto)
+        public async Task<IActionResult> BookRoom(CreateBookingDto dto)
         {
             var kyivZone = GetKyivTimeZone();
             var startOffset = new DateTimeOffset(dto.StartTime, kyivZone.GetUtcOffset(dto.StartTime));
@@ -271,7 +254,7 @@ namespace WorkingSpaces.Controllers.Api
             var kyivZone = GetKyivTimeZone();
 
             DateTimeOffset newStartTimeOffset;
-            if (dto.StartTime.HasValue) 
+            if (dto.StartTime.HasValue)
             {
                 newStartTimeOffset = new DateTimeOffset(dto.StartTime.Value, kyivZone.GetUtcOffset(dto.StartTime.Value));
             }
@@ -308,8 +291,10 @@ namespace WorkingSpaces.Controllers.Api
             return NoContent();
         }
         
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> CancelBooking(int id)
+        
+        
+        [HttpDelete("{bookingId}")]
+        public async Task<IActionResult> CancelBooking(int bookingId)
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdString, out var userId))
@@ -317,7 +302,7 @@ namespace WorkingSpaces.Controllers.Api
                 return Unauthorized();
             }
 
-            var booking = await _context.Bookings.FindAsync(id);
+            var booking = await _context.Bookings.FindAsync(bookingId);
             if (booking == null)
             {
                 return NotFound(new { message = "Error: Booking not found." });

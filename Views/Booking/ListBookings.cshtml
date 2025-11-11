@@ -1,8 +1,8 @@
-@model List<WorkingSpaces.Models.Booking>
+@model List<WorkingSpaces.Models.Dto.BookingDto>
 
 <h2>All Bookings</h2>
 
-<table>
+<table class="table">
     <thead>
         <tr>
             <th>Room Name</th>
@@ -15,16 +15,17 @@
         @foreach (var booking in Model)
         {
             <tr>
-                <td>@booking.Space?.Name</td>
-                <td>@booking.StartTime.ToLocalTime().ToString("dd.MM.yyyy")</td>
-                <td>@booking.User?.FullName</td>
+                <td>@booking.SpaceName</td>
+                <td>@booking.StartTime.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@booking.UserFullName</td>
                 <td>
-                    <a asp-action="Details" asp-route-id="@booking.BookingId" class="btn-details">Details</a>
+                    <a asp-action="Details" asp-route-id="@booking.BookingId" class="btn btn-sm btn-info">Details</a>
                 </td>
             </tr>
         }
     </tbody>
 </table>
+
 
 <style>
     body {

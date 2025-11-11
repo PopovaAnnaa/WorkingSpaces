@@ -29,41 +29,45 @@ namespace WorkingSpaces.Controllers.Api
                     SpaceId = s.SpaceId,
                     Name = s.Name,
                     NumberOfSeats = s.NumberOfSeats,
-                    AvailableEquipment = s.AvailableEquipment
+                    AvailableEquipment = s.AvailableEquipment.ToString() // просто enum
                 })
                 .ToListAsync();
 
             return Ok(spaces);
         }
+
+        // GET: api/spaces/5
         [HttpGet("{id}")]
         public async Task<ActionResult<SpaceDto>> GetSpaceById(int id)
         {
             var spaceDto = await _context.Spaces
                 .Where(s => s.SpaceId == id)
-                .Select(s => new SpaceDto 
+                .Select(s => new SpaceDto
                 {
                     SpaceId = s.SpaceId,
                     Name = s.Name,
                     NumberOfSeats = s.NumberOfSeats,
-                    AvailableEquipment = s.AvailableEquipment
+                    AvailableEquipment = s.AvailableEquipment.ToString() 
                 })
                 .FirstOrDefaultAsync();
 
             if (spaceDto == null)
             {
-                return NotFound(); 
+                return NotFound();
             }
 
-            return Ok(spaceDto); 
+            return Ok(spaceDto);
         }
+
+        // POST: api/spaces
         [HttpPost]
-        public async Task<ActionResult<SpaceDto>> CreateSpace(CreateSpaceDto createDto)
-        {   
+        public async Task<ActionResult<SpaceDto>> CreateSpace([FromBody] CreateSpaceDto createDto)
+        {
             var space = new Space
             {
                 Name = createDto.Name,
                 NumberOfSeats = createDto.NumberOfSeats,
-                AvailableEquipment = createDto.AvailableEquipment
+                AvailableEquipment = createDto.AvailableEquipment ?? Equipment.None
             };
 
             _context.Spaces.Add(space);
@@ -74,40 +78,35 @@ namespace WorkingSpaces.Controllers.Api
                 SpaceId = space.SpaceId,
                 Name = space.Name,
                 NumberOfSeats = space.NumberOfSeats,
-                AvailableEquipment = space.AvailableEquipment
+                AvailableEquipment = space.AvailableEquipment.ToString() 
             };
 
             return CreatedAtAction(nameof(GetSpaceById), new { id = space.SpaceId }, spaceDto);
         }
 
+        // PATCH: api/spaces/5
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdateSpace(int id, UpdateSpaceDto updateDto)
         {
             var space = await _context.Spaces.FindAsync(id);
-            if (space == null)
-            {
-                return NotFound();
-            }
+            if (space == null) return NotFound();
 
             if (!string.IsNullOrWhiteSpace(updateDto.Name))
-            {
                 space.Name = updateDto.Name;
-            }
+
             if (updateDto.NumberOfSeats.HasValue)
-            {
                 space.NumberOfSeats = updateDto.NumberOfSeats.Value;
-            }
-            if (updateDto.AvailableEquipment.HasValue) 
-            {
+
+            // Для enum проверяем на null
+            if (updateDto.AvailableEquipment.HasValue)
                 space.AvailableEquipment = updateDto.AvailableEquipment.Value;
-            }
 
             _context.Entry(space).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
 
+        // DELETE: api/spaces/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSpace(int id)
         {

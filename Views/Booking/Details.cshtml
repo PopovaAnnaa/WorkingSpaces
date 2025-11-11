@@ -1,36 +1,31 @@
-@model WorkingSpaces.Models.Booking
+@model WorkingSpaces.Models.Dto.BookingDto
 
 <h2>Booking Details</h2>
 
 <div class="booking-details">
     <div class="detail">
         <strong>Room Name:</strong>
-        <span>@Model.Space?.Name</span>
+        <span>@Model.SpaceName</span>
     </div>
 
     <div class="detail">
         <strong>Date:</strong>
-        <span>@Model.StartTime.ToLocalTime().ToString("dd.MM.yyyy")</span>
+        <span>@Model.StartTime.ToString("dd.MM.yyyy")</span>
     </div>
 
     <div class="detail">
         <strong>Start Time:</strong>
-        <span>@Model.StartTime.ToLocalTime().ToString("HH:mm")</span>
+        <span>@Model.StartTime.ToString("HH:mm")</span>
     </div>
 
     <div class="detail">
         <strong>End Time:</strong>
-        <span>@Model.EndTime.ToLocalTime().ToString("HH:mm")</span>
-    </div>
-
-    <div class="detail">
-        <strong>User Email:</strong>
-        <span>@Model.User?.Email</span>
+        <span>@Model.EndTime.ToString("HH:mm")</span>
     </div>
 
     <div class="detail">
         <strong>User Full Name:</strong>
-        <span>@Model.User?.FullName</span>
+        <span>@Model.UserFullName</span>
     </div>
 
     <a asp-action="ListBookings" class="btn-back">← Back to list</a>

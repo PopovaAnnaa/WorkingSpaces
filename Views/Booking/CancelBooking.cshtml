@@ -1,4 +1,4 @@
-@model List<WorkingSpaces.Models.Booking>
+@model List<WorkingSpaces.Models.Dto.BookingDto>
 @using System.Security.Claims
 @{
     ViewData["Title"] = "Cancel My Bookings";
@@ -28,7 +28,7 @@
         {
             <tr>
                 <td>@booking.BookingId</td>
-                <td>@booking.Space.Name</td>
+                <td>@booking.SpaceName</td>
                 <td>@booking.StartTime.ToLocalTime().ToString("dd.MM.yyyy")</td>
                 <td>@booking.StartTime.ToLocalTime().ToString("HH:mm")</td>
                 <td>@booking.EndTime.ToLocalTime().ToString("HH:mm")</td>

@@ -1,33 +1,34 @@
-@using WorkingSpaces.Models
+@model WorkingSpaces.Models.Dto.CreateBookingDto
 @{
     ViewData["Title"] = "Book Room";
-    var spaces = ViewBag.Spaces as List<Space> ?? new List<Space>();
+    var spaces = ViewBag.Spaces as List<WorkingSpaces.Models.Dto.SpaceDto> ?? new List<WorkingSpaces.Models.Dto.SpaceDto>();
 }
 
-<form method="post" class="booking-form" asp-action="BookRoom">
+<h2>Book a Room</h2>
+
+<form method="post" asp-controller="Booking" asp-action="BookRoom">
     @Html.AntiForgeryToken()
-    <h2>Book a Room</h2>
-    @if(ViewBag.Result != null)
-    {
-        <p class="result">@ViewBag.Result</p>
-    }
-    <label>Room:</label>
-    <select name="spaceId" required class="form-control" style="width: 100%; padding: 8px 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
-        <option value="">--Choose room--</option>
-        @foreach (var space in spaces)
-        {
-            <option value="@space.SpaceId">@space.Name</option>
-        }
-    </select>
-    
-    <label>Date:</label>
-    <input type="date" name="selectedDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
-    
-    <label>Start Time:</label>
-    <input type="time" name="startTime" required /> 
-    
-    <label>End Time:</label>
-    <input type="time" name="endTime" required />
+
+    <div>
+        <label>Room:</label>
+        <select asp-for="SpaceId" class="form-control" required>
+            <option value="">--Choose room--</option>
+            @foreach (var space in spaces)
+            {
+                <option value="@space.SpaceId">@space.Name (@space.NumberOfSeats seats)</option>
+            }
+        </select>
+    </div>
+
+    <div>
+        <label>Start Time:</label>
+        <input asp-for="StartTime" type="datetime-local" class="form-control" required />
+    </div>
+
+    <div>
+        <label>End Time:</label>
+        <input asp-for="EndTime" type="datetime-local" class="form-control" required />
+    </div>
 
     <button type="submit">Book</button>
 </form>

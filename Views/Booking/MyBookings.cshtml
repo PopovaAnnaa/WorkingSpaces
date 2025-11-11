@@ -1,0 +1,41 @@
+@model List<WorkingSpaces.Models.Dto.BookingDto>
+
+@{
+    ViewData["Title"] = "My Bookings";
+}
+
+<h1>My Bookings</h1>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model == null || !Model.Any())
+{
+    <p>You have no bookings.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Space</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>User</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var booking in Model)
+        {
+            <tr>
+                <td>@booking.SpaceName</td>
+                <td>@booking.StartTime.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@booking.EndTime.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@booking.UserFullName</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

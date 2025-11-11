@@ -11,6 +11,6 @@ namespace WorkingSpaces.Models.Dto
         [Range(1, int.MaxValue)]
         public int NumberOfSeats { get; set; }
         
-        public Equipment AvailableEquipment { get; set; }
+        public Equipment? AvailableEquipment { get; set; }
     }
 }
