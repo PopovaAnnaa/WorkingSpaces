@@ -15,12 +15,12 @@ namespace WorkingSpaces.Controllers.Api
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AccountApiController : ControllerBase
+    public class AccountController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _config;
 
-        public AccountApiController(ApplicationDbContext context, IConfiguration config)
+        public AccountController(ApplicationDbContext context, IConfiguration config)
         {
             _context = context;
             _config = config;

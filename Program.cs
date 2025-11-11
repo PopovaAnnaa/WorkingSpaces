@@ -1,15 +1,13 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using WorkingSpaces.Data;
 using WorkingSpaces.JsonConverters;
 using WorkingSpaces.Models;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,10 +27,48 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new CommaSeparatedEnumListConverter<Equipment>());
 });
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "WorkingSpaces API",
+        Version = "v1",
+        Description = "API for managing workspace bookings"
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Enter the JWT token, for example: Bearer {your token}",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 builder.Services.AddHttpClient();
 builder.Services.AddControllersWithViews();
-builder.Services.AddControllers().AddJsonOptions(opts => {   opts.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()); });
+builder.Services.AddControllers().AddJsonOptions(opts =>
+{
+    opts.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
+
 string provider = builder.Configuration.GetValue("DatabaseProvider", "InMemory")!;
 string? connectionString = builder.Configuration.GetConnectionString(provider);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -84,14 +120,12 @@ builder.Services.AddAuthentication(options =>
         OnTokenValidated = context =>
         {
             Console.WriteLine("Token validated!");
-
             var nameClaim = context.Principal?.FindFirst("name")?.Value ?? "";
             if (!string.IsNullOrEmpty(nameClaim))
             {
                 var identity = context.Principal?.Identity as ClaimsIdentity;
                 identity?.AddClaim(new Claim("FullName", nameClaim));
             }
-
             return Task.CompletedTask;
         },
         OnRemoteFailure = context =>
@@ -130,7 +164,7 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         if (context.Database.IsInMemory())
         {
-            context.Database.EnsureCreated(); 
+            context.Database.EnsureCreated();
         }
     }
     catch (Exception ex)
@@ -145,6 +179,14 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+// 👇 Swagger middleware
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "WorkingSpaces API v1");
+    options.RoutePrefix = "swagger"; // сторінка буде доступна за /swagger
+});
 
 app.UseStaticFiles();
 app.UseRouting();
