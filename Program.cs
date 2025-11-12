@@ -8,6 +8,8 @@ using WorkingSpaces.Data;
 using WorkingSpaces.JsonConverters;
 using WorkingSpaces.Models;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +69,14 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddControllers().AddJsonOptions(opts =>
 {
     opts.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
+
+builder.Services.AddApiVersioning(options =>
+{
+    options.ReportApiVersions = true;
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
 });
 
 string provider = builder.Configuration.GetValue("DatabaseProvider", "InMemory")!;
@@ -180,12 +190,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// 👇 Swagger middleware
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "WorkingSpaces API v1");
-    options.RoutePrefix = "swagger"; // сторінка буде доступна за /swagger
+    options.RoutePrefix = "swagger";
 });
 
 app.UseStaticFiles();

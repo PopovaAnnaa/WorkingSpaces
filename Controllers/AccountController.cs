@@ -25,6 +25,12 @@ namespace WorkingSpaces.Controllers
                           ?? throw new ArgumentNullException("There is no ApiBaseUrl in appsettings.json");
         }
 
+        [HttpGet]
+        public IActionResult Register()
+        {
+            return View();
+        }
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
@@ -36,7 +42,7 @@ namespace WorkingSpaces.Controllers
 
             var client = _httpClientFactory.CreateClient();
 
-            var response = await client.PostAsJsonAsync($"{_apiBaseUrl}/api/accountapi/register", model);
+            var response = await client.PostAsJsonAsync($"{_apiBaseUrl}/api/v1/accountapi/register", model);
 
             if (response.IsSuccessStatusCode)
             {
@@ -85,7 +91,7 @@ namespace WorkingSpaces.Controllers
 
             var client = _httpClientFactory.CreateClient();
 
-            var loginResponse = await client.PostAsJsonAsync($"{_apiBaseUrl}/api/accountapi/login", model);
+            var loginResponse = await client.PostAsJsonAsync($"{_apiBaseUrl}/api/v1/accountapi/login", model);
 
             if (!loginResponse.IsSuccessStatusCode)
             {
@@ -104,7 +110,7 @@ namespace WorkingSpaces.Controllers
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var profileResponse = await client.GetAsync($"{_apiBaseUrl}/api/accountapi/profile");
+            var profileResponse = await client.GetAsync($"{_apiBaseUrl}/api/v1/accountapi/profile");
 
             if (!profileResponse.IsSuccessStatusCode)
             {
@@ -112,7 +118,7 @@ namespace WorkingSpaces.Controllers
                 return View(model);
             }
 
-            var userProfile = await profileResponse.Content.ReadFromJsonAsync<UserDto>();
+            var userProfile = await profileResponse.Content.ReadFromJsonAsync<UserDtoV1>();
             if (userProfile == null)
             {
                 ModelState.AddModelError(string.Empty, "Failed to read profile data.");
@@ -148,7 +154,8 @@ namespace WorkingSpaces.Controllers
             return RedirectToAction("Login");
         }
 
-        [Authorize] 
+        [HttpGet]
+        [Authorize]
         public async Task<IActionResult> Profile()
         {
             var token = User.FindFirstValue("jwt_token");
@@ -162,11 +169,11 @@ namespace WorkingSpaces.Controllers
             var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await client.GetAsync($"{_apiBaseUrl}/api/accountapi/profile");
+            var response = await client.GetAsync($"{_apiBaseUrl}/api/v2/accountapi/profile");
 
             if (response.IsSuccessStatusCode)
             {
-                var userDto = await response.Content.ReadFromJsonAsync<UserDto>();
+                var userDto = await response.Content.ReadFromJsonAsync<UserDtoV2>();
                 if (userDto == null)
                 {
                     return RedirectToAction("Login");
@@ -176,9 +183,56 @@ namespace WorkingSpaces.Controllers
                     Username = userDto.Username,
                     Email = userDto.Email,
                     FullName = userDto.FullName,
+                    Bookings = userDto.Bookings.ToList()
                 };
 
                 return View(model);
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToAction("Login");
+            }
+            else
+            {
+                TempData["Error"] = "Failed to load profile from API.";
+                return RedirectToAction("Index", "Booking");
+            }
+        }
+        
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> ProfileV1()
+        {
+            var token = User.FindFirstValue("jwt_token");
+
+            if (string.IsNullOrEmpty(token))
+            {
+                await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return RedirectToAction("Login");
+            }
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync($"{_apiBaseUrl}/api/v1/accountapi/profile");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var userDto = await response.Content.ReadFromJsonAsync<UserDtoV1>();
+                if (userDto == null)
+                {
+                    return RedirectToAction("Login");
+                }
+                var model = new ProfileViewModel
+                {
+                    Username = userDto.Username,
+                    Email = userDto.Email,
+                    FullName = userDto.FullName,
+                    Bookings = null
+                };
+
+                return View("Profile", model);
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {

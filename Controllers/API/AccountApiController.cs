@@ -14,7 +14,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 namespace WorkingSpaces.Controllers.Api
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [ApiVersion("2.0")]
+    [Route("api/v{version:apiVersion}/accountapi")]
     public class AccountApiController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -26,7 +28,20 @@ namespace WorkingSpaces.Controllers.Api
             _config = config;
         }
 
+        private TimeZoneInfo GetKyivTimeZone()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Europe/Kyiv");
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("E. Europe Standard Time");
+            }
+        }
 
+        [MapToApiVersion("1.0")]
+        [MapToApiVersion("2.0")]
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
@@ -92,6 +107,9 @@ namespace WorkingSpaces.Controllers.Api
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        [MapToApiVersion("1.0")]
+        [MapToApiVersion("2.0")]
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
@@ -112,23 +130,19 @@ namespace WorkingSpaces.Controllers.Api
                 message = "Login successful"
             });
         }
+        
         [HttpGet("profile")]
+        [MapToApiVersion("1.0")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<IActionResult> Profile()
+        public async Task<ActionResult<UserDtoV1>> ProfileV1()
         {
             var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString))
-            {
-                return Unauthorized();
-            }
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
 
             var user = await _context.Users.FindAsync(Guid.Parse(userIdString));
-            if (user == null)
-            {
-                return NotFound();
-            }
+            if (user == null) return NotFound();
 
-            var userDto = new UserDto
+            var userDto = new UserDtoV1
             {
                 UserId = user.UserId,
                 Username = user.Username,
@@ -138,6 +152,46 @@ namespace WorkingSpaces.Controllers.Api
             };
 
             return Ok(userDto);
+        }
+
+        [HttpGet("profile")]
+        [MapToApiVersion("2.0")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<ActionResult<UserDtoV2>> ProfileV2()
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
+
+            var user = await _context.Users
+                .Include(u => u.Bookings)           
+                    .ThenInclude(b => b.Space)     
+                .FirstOrDefaultAsync(u => u.UserId == Guid.Parse(userIdString));
+
+            if (user == null) return NotFound();
+
+            var kyivZone = GetKyivTimeZone();
+
+            var userDtoV2 = new UserDtoV2
+            {
+                UserId = user.UserId,
+                Username = user.Username,
+                FullName = user.FullName,
+                PhoneNumber = user.PhoneNumber,
+                Email = user.Email,
+
+                Bookings = user.Bookings.Select(b => new BookingDto
+                {
+                    BookingId = b.BookingId,
+                    SpaceId = b.SpaceId,
+                    SpaceName = b.Space.Name,
+                    UserId = b.UserId,
+                    UserFullName = user.FullName,
+                    StartTime = TimeZoneInfo.ConvertTime(b.StartTime, kyivZone).DateTime,
+                    EndTime = TimeZoneInfo.ConvertTime(b.EndTime, kyivZone).DateTime
+                }).OrderBy(b => b.StartTime).ToList()
+            };
+
+            return Ok(userDtoV2);
         }
     }
 }
