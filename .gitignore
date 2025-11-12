@@ -44,3 +44,6 @@ packages/
 # DB
 *.db
 .env
+
+#node
+/node_modules
