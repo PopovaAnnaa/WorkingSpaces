@@ -15,6 +15,31 @@
         </form>
     </div>
 </section>
+@if (Model.Bookings != null && Model.Bookings.Any())
+{
+    <section class="bookings-list">
+        <h2>My Bookings</h2>
+        <table class="bookings-table">
+            <thead>
+                <tr>
+                    <th>Space</th>
+                    <th>Start Time (Kyiv)</th>
+                    <th>End Time (Kyiv)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model.Bookings.OrderBy(b => b.StartTime))
+                {
+                    <tr>
+                        <td>@booking.SpaceName</td>
+                        <td>@booking.StartTime.ToString("g")</td>
+                        <td>@booking.EndTime.ToString("g")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
 
 <style>
     body {

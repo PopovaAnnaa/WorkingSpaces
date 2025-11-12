@@ -141,7 +141,6 @@ namespace WorkingSpaces.Controllers
             return View(model);
         }
 
-        // Изменение бронирования
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -210,11 +209,9 @@ namespace WorkingSpaces.Controllers
                 bookings = await response.Content.ReadFromJsonAsync<List<BookingDto>>() ?? new List<BookingDto>();
             }
 
-            return View(bookings); // передаём модель в Razor
+            return View(bookings);
         }
 
-
-        // Удаление
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelBooking(int bookingId)
