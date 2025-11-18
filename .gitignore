@@ -47,3 +47,5 @@ packages/
 
 #node
 /node_modules
+
+/.sonarqube
