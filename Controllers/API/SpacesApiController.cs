@@ -29,14 +29,13 @@ namespace WorkingSpaces.Controllers.Api
                     SpaceId = s.SpaceId,
                     Name = s.Name,
                     NumberOfSeats = s.NumberOfSeats,
-                    AvailableEquipment = s.AvailableEquipment.ToString() // просто enum
+                    AvailableEquipment = s.AvailableEquipment.ToString()
                 })
                 .ToListAsync();
 
             return Ok(spaces);
         }
 
-        // GET: api/spaces/5
         [HttpGet("{id}")]
         public async Task<ActionResult<SpaceDto>> GetSpaceById(int id)
         {
@@ -59,7 +58,6 @@ namespace WorkingSpaces.Controllers.Api
             return Ok(spaceDto);
         }
 
-        // POST: api/spaces
         [HttpPost]
         public async Task<ActionResult<SpaceDto>> CreateSpace([FromBody] CreateSpaceDto createDto)
         {
@@ -84,7 +82,6 @@ namespace WorkingSpaces.Controllers.Api
             return CreatedAtAction(nameof(GetSpaceById), new { id = space.SpaceId }, spaceDto);
         }
 
-        // PATCH: api/spaces/5
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdateSpace(int id, UpdateSpaceDto updateDto)
         {
@@ -97,7 +94,6 @@ namespace WorkingSpaces.Controllers.Api
             if (updateDto.NumberOfSeats.HasValue)
                 space.NumberOfSeats = updateDto.NumberOfSeats.Value;
 
-            // Для enum проверяем на null
             if (updateDto.AvailableEquipment.HasValue)
                 space.AvailableEquipment = updateDto.AvailableEquipment.Value;
 
@@ -106,7 +102,6 @@ namespace WorkingSpaces.Controllers.Api
             return NoContent();
         }
 
-        // DELETE: api/spaces/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSpace(int id)
         {

@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Security.Claims;
+using System.Text;
 using WorkingSpaces.Data;
 using WorkingSpaces.JsonConverters;
 using WorkingSpaces.Models;
-using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Versioning;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,66 +22,62 @@ builder.WebHost.ConfigureKestrel(options =>
     });
 });
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.Converters.Add(new CommaSeparatedEnumListConverter<Equipment>());
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
-builder.Services.AddControllers().AddJsonOptions(options =>
+builder.Services.AddApiVersioning(options =>
 {
-    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-    options.JsonSerializerOptions.Converters.Add(new CommaSeparatedEnumListConverter<Equipment>());
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
 });
 
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddVersionedApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV"; 
+    options.SubstituteApiVersionInUrl = true;
+});
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "WorkingSpaces API",
         Version = "v1",
-        Description = "API for managing workspace bookings"
+        Title = "WorkingSpaces API v1",
+        Description = "Version 1.0 of the API"
     });
+    options.SwaggerDoc("v2", new OpenApiInfo
+    {
+        Version = "v2",
+        Title = "WorkingSpaces API v2",
+        Description = "Version 2.0 of the API"
+    });
+
+    options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        In = ParameterLocation.Header,
-        Description = "Enter the JWT token, for example: Bearer {your token}",
-        Name = "Authorization",
         Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Description = "Enter 'Bearer {token}'"
     });
-
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
+            new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
             Array.Empty<string>()
         }
     });
 });
 
-builder.Services.AddHttpClient();
-builder.Services.AddControllersWithViews();
-builder.Services.AddControllers().AddJsonOptions(opts =>
-{
-    opts.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-});
-
-builder.Services.AddApiVersioning(options =>
-{
-    options.ReportApiVersions = true;
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.DefaultApiVersion = new ApiVersion(1, 0);
-    options.ApiVersionReader = new UrlSegmentApiVersionReader();
-});
-
 string provider = builder.Configuration.GetValue("DatabaseProvider", "InMemory")!;
-string? connectionString = builder.Configuration.GetConnectionString(provider);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     switch (provider)
@@ -115,7 +112,6 @@ builder.Services.AddAuthentication(options =>
     options.ResponseType = "code";
     options.SaveTokens = true;
     options.CallbackPath = "/signin-oidc";
-
     options.Scope.Add("openid");
     options.Scope.Add("profile");
     options.Scope.Add("email");
@@ -129,7 +125,6 @@ builder.Services.AddAuthentication(options =>
         },
         OnTokenValidated = context =>
         {
-            Console.WriteLine("Token validated!");
             var nameClaim = context.Principal?.FindFirst("name")?.Value ?? "";
             if (!string.IsNullOrEmpty(nameClaim))
             {
@@ -140,7 +135,6 @@ builder.Services.AddAuthentication(options =>
         },
         OnRemoteFailure = context =>
         {
-            Console.WriteLine("Remote failure: " + context.Failure?.Message);
             context.HandleResponse();
             return Task.CompletedTask;
         }
@@ -150,7 +144,7 @@ builder.Services.AddAuthentication(options =>
 {
     options.SaveToken = true;
     options.RequireHttpsMetadata = false;
-    options.TokenValidationParameters = new TokenValidationParameters()
+    options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
@@ -158,29 +152,21 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
     };
 });
 
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    try
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    if (context.Database.IsInMemory())
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        if (context.Database.IsInMemory())
-        {
-            context.Database.EnsureCreated();
-        }
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred seeding the DB.");
+        context.Database.EnsureCreated();
     }
 }
 
@@ -191,10 +177,15 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseSwagger();
+
+var apiVersionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 app.UseSwaggerUI(options =>
 {
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "WorkingSpaces API v1");
-    options.RoutePrefix = "swagger";
+    foreach (var description in apiVersionProvider.ApiVersionDescriptions)
+    {
+        options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+            description.GroupName.ToUpperInvariant());
+    }
 });
 
 app.UseStaticFiles();
@@ -203,7 +194,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

@@ -8,7 +8,7 @@ describe('Search API', () => {
 
     beforeAll(async () => {
       const loginRes = await request(API_URL)
-        .post('/api/AccountApi/login')
+        .post('/api/v1/accountapi/login')
         .send({ Username: 'ssherliann', Password: 'A~1234567890-' });
   
       expect(loginRes.status).toBe(200);

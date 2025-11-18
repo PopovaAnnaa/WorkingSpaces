@@ -6,33 +6,34 @@
 
 <h2>Book a Room</h2>
 
-<form method="post" asp-controller="Booking" asp-action="BookRoom">
-    @Html.AntiForgeryToken()
+<div class="booking-form">
+    <form method="post" asp-controller="Booking" asp-action="BookRoom">
+        @Html.AntiForgeryToken()
 
-    <div>
-        <label>Room:</label>
-        <select asp-for="SpaceId" class="form-control" required>
-            <option value="">--Choose room--</option>
-            @foreach (var space in spaces)
-            {
-                <option value="@space.SpaceId">@space.Name (@space.NumberOfSeats seats)</option>
-            }
-        </select>
-    </div>
+        <div class="form-group">
+            <label>Room:</label>
+            <select asp-for="SpaceId" class="form-control" required>
+                <option value="">--Choose room--</option>
+                @foreach (var space in spaces)
+                {
+                    <option value="@space.SpaceId">@space.Name (@space.NumberOfSeats seats)</option>
+                }
+            </select>
+        </div>
 
-    <div>
-        <label>Start Time:</label>
-        <input asp-for="StartTime" type="datetime-local" class="form-control" required />
-    </div>
+        <div class="form-group">
+            <label>Start Time:</label>
+            <input asp-for="StartTime" type="datetime-local" class="form-control" required />
+        </div>
 
-    <div>
-        <label>End Time:</label>
-        <input asp-for="EndTime" type="datetime-local" class="form-control" required />
-    </div>
+        <div class="form-group">
+            <label>End Time:</label>
+            <input asp-for="EndTime" type="datetime-local" class="form-control" required />
+        </div>
 
-    <button type="submit">Book</button>
-</form>
-
+        <button type="submit" class="submit-btn">Book</button>
+    </form>
+</div>
 
 <style>
     body {

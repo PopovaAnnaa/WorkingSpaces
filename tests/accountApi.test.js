@@ -18,9 +18,9 @@ let testUser = {
 
   let jwtToken = '';
 
-  test('POST /api/AccountApi/register - success', async () => {
+  test('POST /api/v1/accountapi/register - success', async () => {
     const res = await request(API_URL)
-      .post('/api/AccountApi/register')
+      .post('/api/v1/accountapi/register')
       .send(testUser);
       console.log(res.body);
 
@@ -28,9 +28,9 @@ let testUser = {
     expect(res.body).toHaveProperty('message', 'User registered successfully');
   });
 
-  test('POST /api/AccountApi/register - duplicate username/email', async () => {
+  test('POST /api/v1/accountapi/register - duplicate username/email', async () => {
     const res = await request(API_URL)
-      .post('/api/AccountApi/register')
+      .post('/api/v1/accountapi/register')
       .send(testUser);
 
     expect(res.statusCode).toBe(400);
@@ -38,9 +38,9 @@ let testUser = {
     expect(res.body).toHaveProperty('Email');
   });
 
-  test('POST /api/AccountApi/login - success', async () => {
+  test('POST /api/v1/accountapi/login - success', async () => {
     const res = await request(API_URL)
-      .post('/api/AccountApi/login')
+      .post('/api/v1/accountapi/login')
       .send({
         UserName: testUser.UserName,
         Password: testUser.Password
@@ -53,9 +53,9 @@ let testUser = {
     jwtToken = res.body.token;
   });
 
-  test('POST /api/AccountApi/login - invalid password', async () => {
+  test('POST /api/v1/accountapi/login - invalid password', async () => {
     const res = await request(API_URL)
-      .post('/api/AccountApi/login')
+      .post('/api/v1/accountapi/login')
       .send({
         UserName: testUser.UserName,
         Password: 'WrongPassword1!'
@@ -65,16 +65,16 @@ let testUser = {
     expect(res.body).toHaveProperty('message', 'Invalid username or password');
   });
 
-  test('GET /api/AccountApi/profile - unauthorized', async () => {
+  test('GET /api/v1/accountapi/profile - unauthorized', async () => {
     const res = await request(API_URL)
-      .get('/api/AccountApi/profile');
+      .get('/api/v1/accountapi/profile');
 
     expect(res.statusCode).toBe(401);
   });
 
-  test('GET /api/AccountApi/profile - authorized', async () => {
+  test('GET /api/v1/accountapi/profile - authorized', async () => {
     const res = await request(API_URL)
-      .get('/api/AccountApi/profile')
+      .get('/api/v1/accountapi/profile')
       .set('Authorization', `Bearer ${jwtToken}`);
 
     expect(res.statusCode).toBe(200);
