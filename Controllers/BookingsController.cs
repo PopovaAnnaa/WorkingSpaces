@@ -18,7 +18,7 @@ namespace WorkingSpaces.Controllers
         {
             _httpClientFactory = httpClientFactory;
             _apiBaseUrl = configuration.GetValue<string>("ApiBaseUrl")
-                          ?? throw new ArgumentNullException("There is no ApiBaseUrl in appsettings.json");
+                          ?? throw new ArgumentNullException("ApiBaseUrl not found in appsettings.json");
         }
 
         public IActionResult Index()
@@ -60,7 +60,7 @@ namespace WorkingSpaces.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
-                TempData["Error"] = "Failed to load your bookings";
+                TempData["Error"] = "Failed to load your bookings.";
                 return View(new List<BookingDto>());
             }
 
@@ -133,7 +133,7 @@ namespace WorkingSpaces.Controllers
             if (error != null && error.ContainsKey("message"))
                 ModelState.AddModelError(string.Empty, error["message"]);
             else
-                ModelState.AddModelError(string.Empty, "Ошибка при создании бронирования.");
+                ModelState.AddModelError(string.Empty, "Error while creating the booking.");
 
             var responseSpaces2 = await httpClient.GetAsync($"{_apiBaseUrl}/api/spaces");
             ViewBag.Spaces = await responseSpaces2.Content.ReadFromJsonAsync<List<SpaceDto>>() ?? new List<SpaceDto>();
@@ -156,7 +156,7 @@ namespace WorkingSpaces.Controllers
 
             if (booking == null)
             {
-                TempData["Error"] = "Не удалось загрузить данные бронирования.";
+                TempData["Error"] = "Failed to load booking data.";
                 return RedirectToAction("MyBookings");
             }
 
@@ -187,7 +187,7 @@ namespace WorkingSpaces.Controllers
             if (error != null && error.ContainsKey("message"))
                 ModelState.AddModelError(string.Empty, error["message"]);
             else
-                ModelState.AddModelError(string.Empty, "Ошибка при обновлении бронирования.");
+                ModelState.AddModelError(string.Empty, "Error while updating the booking.");
 
             return View(model);
         }
@@ -224,7 +224,7 @@ namespace WorkingSpaces.Controllers
 
             if (!response.IsSuccessStatusCode)
             {
-                TempData["Error"] = "Не удалось удалить бронирование.";
+                TempData["Error"] = "Failed to delete booking.";
             }
 
             return RedirectToAction("MyBookings");

@@ -4,38 +4,110 @@
     ViewData["Title"] = "My Bookings";
 }
 
-<h1>My Bookings</h1>
+<h1 class="title">My Bookings</h1>
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
+<div class="bookings-container">
 
-@if (Model == null || !Model.Any())
-{
-    <p>You have no bookings.</p>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Space</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>User</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var booking in Model)
-        {
-            <tr>
-                <td>@booking.SpaceName</td>
-                <td>@booking.StartTime.ToString("dd.MM.yyyy HH:mm")</td>
-                <td>@booking.EndTime.ToString("dd.MM.yyyy HH:mm")</td>
-                <td>@booking.UserFullName</td>
-            </tr>
-        }
-        </tbody>
-    </table>
-}
+    @if (TempData["Error"] != null)
+    {
+        <div class="result">@TempData["Error"]</div>
+    }
+
+    @if (Model == null || !Model.Any())
+    {
+        <p class="no-bookings">You have no bookings.</p>
+    }
+    else
+    {
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Space</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>User</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var booking in Model)
+            {
+                <tr>
+                    <td>@booking.SpaceName</td>
+                    <td>@booking.StartTime.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>@booking.EndTime.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>@booking.UserFullName</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>
+
+<style>
+    body {
+        background-color: #f5f4f8;
+        font-family: sans-serif;
+    }
+
+    .title {
+        text-align: center;
+        margin-top: 40px;
+        color: #4b0082;
+        font-size: 32px;
+    }
+
+    .bookings-container {
+        max-width: 800px;
+        margin: 30px auto 80px auto;
+        background-color: #fff;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .no-bookings {
+        text-align: center;
+        font-size: 18px;
+        color: #555;
+    }
+
+    .custom-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .custom-table thead {
+        background-color: #6a0dad;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    .custom-table th, .custom-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e5e5e5;
+        text-align: left;
+    }
+
+    .custom-table tr:nth-child(even) {
+        background-color: #faf7ff;
+    }
+
+    .custom-table tr:hover {
+        background-color: #f0e6ff;
+        transition: 0.2s;
+    }
+
+    .result {
+        text-align: center;
+        margin-bottom: 15px; 
+        background-color: #f8d7da;
+        color: #721c24;
+        font-weight: bold;
+        padding: 10px;
+        border: 1px solid #f5c6cb;
+        border-radius: 6px;
+    }
+</style>
