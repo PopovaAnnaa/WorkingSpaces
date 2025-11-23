@@ -11,7 +11,7 @@ namespace WorkingSpaces.Controllers.Api
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class BookingsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -102,12 +102,14 @@ namespace WorkingSpaces.Controllers.Api
                 return validationError;
             }
 
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
-            {
-                return Unauthorized();
-            }
-
+            // var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            // if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+            // {
+            //     return Unauthorized();
+            // }
+            
+            // Для JMeter
+            var userId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
             var newBooking = new Booking
             {
                 SpaceId = dto.SpaceId,

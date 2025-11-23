@@ -11,14 +11,22 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Instrumentation.Runtime;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.ListenLocalhost(5189, listenOptions =>
-    {
-        listenOptions.UseHttps();
-    });
+    options.ListenLocalhost(5189);
+    // options.ListenLocalhost(5189, listenOptions =>
+    // {
+    //     listenOptions.UseHttps();
+    // });
 });
 
 builder.Services.AddControllersWithViews();
@@ -165,17 +173,50 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+var serviceName = "WorkingSpaces.API";
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+    {
+        tracerProviderBuilder
+            .AddSource(serviceName)
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName))
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddZipkinExporter(options =>
+            {
+                options.Endpoint = new Uri("http://localhost:9411/api/v2/spans");
+            });
+    })
+    .WithMetrics(metricsProviderBuilder =>
+    {
+        metricsProviderBuilder
+            .AddMeter(serviceName)
+            .AddAspNetCoreInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddPrometheusExporter();
+    });
+
 var app = builder.Build();
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
+        Console.WriteLine("Перевірка БД...");
         var context = services.GetRequiredService<ApplicationDbContext>();
-        if (context.Database.IsInMemory())
+        if (!context.Database.IsInMemory())
+        {
+            context.Database.Migrate();
+        }
+        else 
         {
             context.Database.EnsureCreated();
         }
+        DbSeeder.Seed(context);
     }
     catch (Exception ex)
     {
