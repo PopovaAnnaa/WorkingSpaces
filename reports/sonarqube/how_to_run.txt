@@ -1,12 +1,5 @@
 docker run -d --name sonarqube -p 9000:9000 sonarqube:lts
 
-login: admin
-pass: workingspaces
-
-
-dotnet tool install --global dotnet-sonarscanner
-
-
 dotnet sonarscanner begin /k:"WorkingSpaces" /d:sonar.login="sqp_8b9356f7d73d7f5dac696c57fcbea76a449d3ad8" /d:sonar.host.url="http://localhost:9000"
 dotnet build
 dotnet sonarscanner end /d:sonar.login="sqp_8b9356f7d73d7f5dac696c57fcbea76a449d3ad8"
